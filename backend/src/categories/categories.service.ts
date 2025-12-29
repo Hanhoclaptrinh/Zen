@@ -31,7 +31,7 @@ export class CategoriesService {
     }
 
     remove(id: number, userId: number) {
-        return this.prisma.category.delete({
+        return this.prisma.category.deleteMany({
             where: { id, userId }
         });
     }
