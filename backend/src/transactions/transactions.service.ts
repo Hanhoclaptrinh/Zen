@@ -14,7 +14,7 @@ export class TransactionsService {
         });
     }
 
-    // tao giao dich moi
+    // create new transaction
     async create(dto: CreateTransactionDto, userId: number) {
         // check if category belongs to user
         const category = await this.prisma.category.findFirst({
