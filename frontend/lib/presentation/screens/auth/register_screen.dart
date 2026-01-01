@@ -1,12 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/presentation/screens/auth/login_screen.dart';
+import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:frontend/presentation/widgets/auth_input_field.dart';
+import 'package:frontend/providers/app_providers.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _handleRegister() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+      );
+      return;
+    }
+
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .register(name, email, password);
+
+    if (success && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        (route) => false,
+      );
+    } else {
+      final error = ref.read(authControllerProvider).error;
+      if (error != null && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
@@ -50,14 +97,19 @@ class RegisterScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 48),
 
-                    const AuthInputField(hintText: "Họ và Tên"),
-                    const AuthInputField(
+                    AuthInputField(
+                      hintText: "Họ và Tên",
+                      controller: _nameController,
+                    ),
+                    AuthInputField(
                       hintText: "Email",
                       keyboardType: TextInputType.emailAddress,
+                      controller: _emailController,
                     ),
-                    const AuthInputField(
+                    AuthInputField(
                       hintText: "Mật khẩu",
                       obscureText: true,
+                      controller: _passwordController,
                     ),
 
                     const SizedBox(height: 40),
@@ -134,11 +186,9 @@ class RegisterScreen extends StatelessWidget {
 
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white),
+              decoration: const BoxDecoration(color: Colors.white),
               child: ElevatedButton(
-                onPressed: () {
-                  // register logic
-                },
+                onPressed: isLoading ? null : _handleRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0057FF),
                   minimumSize: const Size(double.infinity, 56),
@@ -146,14 +196,16 @@ class RegisterScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  "Đăng ký",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Đăng ký",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],

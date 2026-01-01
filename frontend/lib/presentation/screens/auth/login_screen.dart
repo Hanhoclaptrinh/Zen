@@ -1,12 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/presentation/screens/auth/register_screen.dart';
+import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:frontend/presentation/widgets/auth_input_field.dart';
+import 'package:frontend/providers/app_providers.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+      );
+      return;
+    }
+
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .login(email, password);
+
+    if (success && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        (route) => false,
+      );
+    } else {
+      final error = ref.read(authControllerProvider).error;
+      if (error != null && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
@@ -50,13 +95,15 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 48),
 
-                    const AuthInputField(
+                    AuthInputField(
                       hintText: "Email hoặc Tên đăng nhập",
                       keyboardType: TextInputType.emailAddress,
+                      controller: _emailController,
                     ),
-                    const AuthInputField(
+                    AuthInputField(
                       hintText: "Mật khẩu",
                       obscureText: true,
+                      controller: _passwordController,
                     ),
 
                     Align(
@@ -147,11 +194,9 @@ class LoginScreen extends StatelessWidget {
 
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white),
+              decoration: const BoxDecoration(color: Colors.white),
               child: ElevatedButton(
-                onPressed: () {
-                  // login logic
-                },
+                onPressed: isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0057FF),
                   minimumSize: const Size(double.infinity, 56),
@@ -159,14 +204,16 @@ class LoginScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  "Đăng nhập",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Đăng nhập",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
