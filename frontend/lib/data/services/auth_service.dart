@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:frontend/data/models/user_model.dart';
 import 'package:frontend/data/services/api_client.dart';
 
 class AuthService {
@@ -33,6 +34,15 @@ class AuthService {
       return response.data['accessToken'];
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Registration failed');
+    }
+  }
+
+  Future<UserModel> getUserProfile() async {
+    try {
+      final response = await _apiClient.dio.get('/auth/profile');
+      return UserModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Failed to fetch profile');
     }
   }
 }
