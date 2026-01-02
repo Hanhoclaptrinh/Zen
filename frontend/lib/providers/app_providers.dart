@@ -162,6 +162,24 @@ class TransactionState {
       .fold(0.0, (sum, t) => sum + t.amount);
 
   double get balance => totalIncome - totalExpense;
+
+  double get monthlyBalance {
+    final monthTransactions = allTransactions.where(
+      (t) =>
+          t.transactionDate.year == selectedDate.year &&
+          t.transactionDate.month == selectedDate.month,
+    );
+
+    final income = monthTransactions
+        .where((t) => t.type == 'income')
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final expense = monthTransactions
+        .where((t) => t.type == 'expense')
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    return income - expense;
+  }
 }
 
 class TransactionController extends Notifier<TransactionState> {

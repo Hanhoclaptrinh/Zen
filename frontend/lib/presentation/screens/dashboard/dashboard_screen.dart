@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/core/utils/string_utils.dart';
 import 'package:intl/intl.dart';
-import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
 import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart';
 import 'package:frontend/presentation/screens/transactions/transaction_list_screen.dart';
 import 'package:frontend/providers/app_providers.dart';
+import 'package:frontend/presentation/widgets/side_menu.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -35,7 +35,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       key: _scaffoldKey,
       backgroundColor: Colors.grey[50],
       drawerEnableOpenDragGesture: true,
-      drawer: _buildDrawer(context, ref),
+      drawer: const SideMenu(currentRoute: 'home'), // marker
       appBar: AppBar(
         backgroundColor: Colors.grey[50],
         elevation: 0,
@@ -144,7 +144,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "${transactionState.balance.toVnd()}",
+                          "${transactionState.monthlyBalance.toVnd()}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 32,
@@ -231,7 +231,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Recent Transactions Panel
+                  // transactions list panel
                   if (transactionState.isLoading)
                     const Center(child: CircularProgressIndicator())
                   else
@@ -339,178 +339,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         },
         backgroundColor: const Color(0xFF0057FF),
         child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
-      ),
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authControllerProvider);
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return SizedBox(
-      width: screenWidth * 0.7,
-      child: Drawer(
-        backgroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(32),
-            bottomRight: Radius.circular(32),
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF130F40), Color(0xFF000000)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(topRight: Radius.circular(32)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CircleAvatar(
-                    radius: 35,
-                    backgroundColor: Colors.white24,
-                    child: Icon(
-                      Icons.person_rounded,
-                      size: 40,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    authState.user?.fullName ?? 'User',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    authState.user?.email ?? 'user@gmail.com',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // menu items
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildModernDrawerItem(
-                    context,
-                    icon: "assets/homeico.svg",
-                    title: 'Trang chủ',
-                    isActive: true,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  _buildModernDrawerItem(
-                    context,
-                    icon: "assets/chartico.svg",
-                    title: 'Phân tích chi tiêu',
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  _buildModernDrawerItem(
-                    context,
-                    icon: "assets/userico.svg",
-                    title: 'Hồ sơ cá nhân',
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  const Divider(height: 40, thickness: 1),
-                  _buildModernDrawerItem(
-                    context,
-                    icon: null,
-                    isLogout: true,
-                    title: 'Đăng xuất',
-                    onTap: () {
-                      ref.read(authControllerProvider.notifier).logout();
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AuthChoiceScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Zen - 2026",
-                style: TextStyle(color: Colors.grey[400], fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModernDrawerItem(
-    BuildContext context, {
-    required String title,
-    String? icon,
-    bool isActive = false,
-    bool isLogout = false,
-    required VoidCallback onTap,
-  }) {
-    final color = isLogout
-        ? Colors.redAccent
-        : (isActive ? const Color(0xFF0057FF) : Colors.black87);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: isActive
-                ? const Color(0xFF0057FF).withOpacity(0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              if (icon != null)
-                SvgPicture.asset(
-                  icon,
-                  width: 22,
-                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-                )
-              else if (isLogout)
-                SvgPicture.asset("assets/logoutico.svg"),
-              const SizedBox(width: 16),
-              Text(
-                title,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 15,
-                  fontWeight: isActive || isLogout
-                      ? FontWeight.bold
-                      : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
