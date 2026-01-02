@@ -5,6 +5,7 @@ import 'package:frontend/core/utils/string_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
 import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart';
+import 'package:frontend/presentation/screens/transactions/transaction_list_screen.dart';
 import 'package:frontend/providers/app_providers.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -167,6 +168,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             "assets/adlico.svg",
                             color: Colors.greenAccent,
                           ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TransactionListScreen(
+                                      transactionType: 'income',
+                                    ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -179,6 +191,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             "assets/aurico.svg",
                             color: Colors.redAccent,
                           ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TransactionListScreen(
+                                      transactionType: 'expense',
+                                    ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -467,59 +490,64 @@ class _SummaryCard extends StatelessWidget {
   final double amount;
   final Color color;
   final SvgPicture icon;
+  final VoidCallback? onTap;
 
   const _SummaryCard({
     required this.title,
     required this.amount,
     required this.color,
     required this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade100,
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: SizedBox(width: 16, height: 16, child: icon),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            "${NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(amount)}",
-            style: TextStyle(
-              color: color,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade100,
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox(width: 16, height: 16, child: icon),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "${NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(amount)}",
+              style: TextStyle(
+                color: color,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

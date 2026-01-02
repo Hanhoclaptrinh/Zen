@@ -7,7 +7,7 @@ extension StringExtension on String {
   }
 }
 
-extension DoubleExtension on double {
+extension DoubleExtension on num {
   String toVnd() {
     return NumberFormat.currency(
       locale: 'vi_VN',
