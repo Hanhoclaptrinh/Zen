@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:frontend/core/utils/string_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
 import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart';
@@ -35,7 +36,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       drawerEnableOpenDragGesture: true,
       drawer: _buildDrawer(context, ref),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.grey[50],
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset("assets/menuico.svg"),
@@ -94,12 +95,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                           Text(
                             transactionState.filterMode == FilterMode.day
-                                ? DateFormat(
-                                    'dd MMM, yyyy',
-                                  ).format(transactionState.selectedDate)
-                                : DateFormat(
-                                    'MMMM, yyyy',
-                                  ).format(transactionState.selectedDate),
+                                ? DateFormat('dd MMM, yyyy', 'vi_VN')
+                                      .format(transactionState.selectedDate)
+                                      .capitalize()
+                                : DateFormat('MMMM, yyyy', 'vi_VN')
+                                      .format(transactionState.selectedDate)
+                                      .capitalize(),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -142,7 +143,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "${NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(transactionState.balance)}",
+                          "${transactionState.balance.toVnd()}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 32,
@@ -236,7 +237,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             )
                           : Column(
                               children: transactionState.filteredTransactions
-                                  .take(10)
+                                  .take(5)
                                   .map((transaction) {
                                     return Column(
                                       children: [
@@ -273,7 +274,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                             ),
                                           ),
                                           trailing: Text(
-                                            "${transaction.type == 'income' ? '+' : '-'}${NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(transaction.amount)}",
+                                            "${transaction.type == 'income' ? '+' : '-'}${transaction.amount.toVnd()}",
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color:
