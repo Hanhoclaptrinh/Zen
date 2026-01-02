@@ -20,38 +20,50 @@ class CategoryModel {
   }
 
   // icon helper
+  static const Map<String, IconData> _iconMapping = {
+    'ăn': Icons.restaurant_menu,
+    'uống': Icons.local_cafe,
+    'lương': Icons.payments_rounded,
+    'thưởng': Icons.card_giftcard,
+    'xe': Icons.directions_car,
+    'nhà': Icons.home_work,
+    'điện': Icons.electric_bolt,
+    'nước': Icons.water_drop,
+    'học': Icons.school,
+    'y tế': Icons.health_and_safety,
+    'mua': Icons.shopping_cart,
+    'net': Icons.wifi,
+    'giải trí': Icons.theater_comedy,
+    'du lịch': Icons.flight_takeoff,
+  };
+
+  static const Map<String, Color> _colorMapping = {
+    'ăn': Colors.orange,
+    'uống': Colors.brown,
+    'xe': Colors.blue,
+    'nhà': Colors.purple,
+    'sắm': Colors.pink,
+    'lương': Colors.green,
+    'thưởng': Colors.redAccent,
+    'y tế': Colors.red,
+    'học': Colors.indigo,
+    'điện': Colors.amber,
+    'nước': Colors.lightBlue,
+  };
+
   IconData get icon {
     final lowerName = name.toLowerCase();
-    if (lowerName.contains('ăn') || lowerName.contains('food'))
-      return Icons.restaurant;
-    if (lowerName.contains('uống') || lowerName.contains('drink'))
-      return Icons.local_cafe;
-    if (lowerName.contains('đi') || lowerName.contains('transport'))
-      return Icons.directions_car;
-    if (lowerName.contains('nhà') || lowerName.contains('home'))
-      return Icons.home;
-    if (lowerName.contains('sắm') || lowerName.contains('shop'))
-      return Icons.shopping_bag;
-    if (lowerName.contains('lương') || lowerName.contains('salary'))
-      return Icons.attach_money;
-    if (lowerName.contains('thưởng') || lowerName.contains('bonus'))
-      return Icons.card_giftcard;
-    if (lowerName.contains('y tế') || lowerName.contains('health'))
-      return Icons.local_hospital;
-    if (lowerName.contains('học') || lowerName.contains('education'))
-      return Icons.school;
-    return Icons.category; // default icon
+    for (var entry in _iconMapping.entries) {
+      if (lowerName.contains(entry.key)) return entry.value;
+    }
+    return Icons.help_outline;
   }
 
   Color get color {
     final lowerName = name.toLowerCase();
-    if (lowerName.contains('ăn')) return Colors.orange;
-    if (lowerName.contains('uống')) return Colors.brown;
-    if (lowerName.contains('đi')) return Colors.blue;
-    if (lowerName.contains('nhà')) return Colors.purple;
-    if (lowerName.contains('sắm')) return Colors.pink;
-    if (lowerName.contains('lương')) return Colors.green;
-    if (lowerName.contains('y tế')) return Colors.red;
+    for (var entry in _colorMapping.entries) {
+      if (lowerName.contains(entry.key)) return entry.value;
+    }
     return Colors.grey;
   }
 }
