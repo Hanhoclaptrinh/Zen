@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/presentation/screens/auth/login_screen.dart';
 import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:frontend/presentation/widgets/auth_input_field.dart';
+import 'package:frontend/presentation/widgets/loading_dialog.dart';
 import 'package:frontend/providers/app_providers.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -29,9 +30,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
+    // show loading dialog
+    showLoadingDialog(context, "Đang đăng ký...");
+
     final success = await ref
         .read(authControllerProvider.notifier)
         .register(name, email, password);
+
+    // hide loading dialog
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
 
     if (success && mounted) {
       Navigator.pushAndRemoveUntil(
@@ -51,8 +60,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authControllerProvider);
-    final isLoading = authState.isLoading;
+    ref.watch(authControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -188,7 +196,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(color: Colors.white),
               child: ElevatedButton(
-                onPressed: isLoading ? null : _handleRegister,
+                onPressed: _handleRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0057FF),
                   minimumSize: const Size(double.infinity, 56),
@@ -196,16 +204,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        "Đăng ký",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                child: const Text(
+                  "Đăng ký",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
