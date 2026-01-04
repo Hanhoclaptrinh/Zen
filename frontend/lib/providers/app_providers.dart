@@ -214,6 +214,43 @@ class TransactionController extends Notifier<TransactionState> {
     }
   }
 
+  Future<bool> updateTransaction(int id, Map<String, dynamic> data) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _service.updateTransaction(id, data);
+      await fetchTransactions();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> deleteTransaction(int id) async {
+    // Optimistic Update: Remove from UI immediately to avoid Dismissible errors
+    final previousState = state;
+    final updatedAll = state.allTransactions.where((t) => t.id != id).toList();
+
+    // Update state immediately
+    state = state.copyWith(allTransactions: updatedAll);
+    _applyFilter();
+
+    try {
+      await _service.deleteTransaction(id);
+      // No need to fetch again if successful, as we already removed it.
+      // But fetching ensures consistency. If we fetch, we might cause another rebuild.
+      // Ideally, just keep local state. But to be safe, we can fetch silently or just leave it.
+      // Let's NOT fetch again to keep it snappy, unless we want to sync.
+      // Creating a background sync is better. For now, stick to optimistic.
+      return true;
+    } catch (e) {
+      // Revert if failed
+      state = previousState;
+      state = state.copyWith(error: "Failed to delete: ${e.toString()}");
+      return false;
+    }
+  }
+
   void setFilterMode(FilterMode mode) {
     state = state.copyWith(filterMode: mode);
     _applyFilter();

@@ -272,6 +272,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     return Column(
                                       children: [
                                         ListTile(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AddTransactionScreen(
+                                                      transaction: transaction,
+                                                    ),
+                                              ),
+                                            );
+                                          },
                                           contentPadding: EdgeInsets.zero,
                                           leading: CircleAvatar(
                                             backgroundColor:

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/data/models/category_model.dart';
+import 'package:frontend/data/models/transaction_model.dart'; // Import
 import 'package:frontend/providers/app_providers.dart';
 import 'package:intl/intl.dart';
 
@@ -29,7 +30,9 @@ class CurrencyInputFormatter extends TextInputFormatter {
 }
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  const AddTransactionScreen({super.key});
+  final TransactionModel? transaction; // neu truyen vao data cu -> edit mode
+
+  const AddTransactionScreen({super.key, this.transaction});
 
   @override
   ConsumerState<AddTransactionScreen> createState() =>
@@ -48,10 +51,37 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   void initState() {
     super.initState();
-    // init: 0 - chi | 1 - thu
-    _pageController = PageController(initialPage: 0);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(categoryControllerProvider.notifier).fetchCategories();
+    // init logic for edit mode
+    if (widget.transaction != null) {
+      final t = widget.transaction!;
+      _isIncome = t.type == 'income';
+      _amountController.text = NumberFormat.currency(
+        locale: 'vi_VN',
+        symbol: '',
+      ).format(t.amount).trim();
+      _noteController.text = t.note ?? '';
+      _selectedDate = t.transactionDate;
+      // category will be set after fetching categories
+    }
+
+    _pageController = PageController(initialPage: _isIncome ? 1 : 0);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(categoryControllerProvider.notifier).fetchCategories();
+
+      if (widget.transaction != null && mounted) {
+        final categories = ref.read(categoryControllerProvider).categories;
+        try {
+          final match = categories.firstWhere(
+            (c) => c.id == widget.transaction!.categoryId,
+          );
+          setState(() {
+            _selectedCategory = match;
+          });
+        } catch (_) {
+          // category might be deleted
+        }
+      }
     });
   }
 
@@ -116,9 +146,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       'transactionDate': _selectedDate.toIso8601String(),
     };
 
-    final success = await ref
-        .read(transactionControllerProvider.notifier)
-        .addTransaction(data);
+    bool success;
+    if (widget.transaction != null) {
+      // update
+      success = await ref
+          .read(transactionControllerProvider.notifier)
+          .updateTransaction(widget.transaction!.id, data);
+    } else {
+      // create
+      success = await ref
+          .read(transactionControllerProvider.notifier)
+          .addTransaction(data);
+    }
 
     if (success && mounted) {
       Navigator.pop(context);
@@ -290,7 +329,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           icon: const Icon(Icons.close_rounded, color: Colors.black, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: _buildToggleSwitch(),
+        title: widget.transaction != null
+            ? const Text(
+                "Chỉnh sửa giao dịch",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            : _buildToggleSwitch(),
         actions: [
           IconButton(
             onPressed: () => _showAddCategoryDialog(context),
@@ -394,9 +441,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                           : const Color(0xFFFF7675))
                       .withOpacity(0.4),
             ),
-            child: const Text(
-              "Lưu giao dịch",
-              style: TextStyle(
+            child: Text(
+              widget.transaction != null ? "Lưu thay đổi" : "Lưu giao dịch",
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

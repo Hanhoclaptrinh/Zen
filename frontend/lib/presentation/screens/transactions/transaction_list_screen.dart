@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/core/utils/string_utils.dart';
 import 'package:frontend/data/models/transaction_model.dart';
+import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart'; // Import
 import 'package:frontend/providers/app_providers.dart';
 import 'package:intl/intl.dart';
 
@@ -175,6 +176,8 @@ class TransactionListScreen extends ConsumerWidget {
                               itemBuilder: (context, i) {
                                 final transaction = group.transactions[i];
                                 return _buildTransactionItem(
+                                  context,
+                                  ref,
                                   transaction,
                                   primaryColor,
                                   backgroundColor,
@@ -240,70 +243,130 @@ class TransactionListScreen extends ConsumerWidget {
   }
 
   Widget _buildTransactionItem(
+    BuildContext context,
+    WidgetRef ref,
     TransactionModel transaction,
     Color color,
     Color bgColor,
     bool isIncome,
   ) {
-    return InkWell(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-              child: Center(
-                child: SvgPicture.asset(
-                  isIncome ? "assets/adlico.svg" : "assets/aurico.svg",
-                  color: color,
-                  width: 22,
+    // vuot de xoa
+    return Dismissible(
+      key: Key(transaction.id.toString()),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: const BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Xác nhận xóa"),
+              content: const Text("Bạn có chắc chắn muốn xóa giao dịch này?"),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(
+                    "Hủy",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text(
+                    "Xóa",
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) {
+        ref
+            .read(transactionControllerProvider.notifier)
+            .deleteTransaction(transaction.id);
+      },
+      child: InkWell(
+        onTap: () {
+          // Navigate to edit
+          Navigator.push(
+            context, // Need context
+            MaterialPageRoute(
+              builder: (context) =>
+                  AddTransactionScreen(transaction: transaction),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    isIncome ? "assets/adlico.svg" : "assets/aurico.svg",
+                    color: color,
+                    width: 22,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
+              const SizedBox(width: 16),
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    transaction.note ?? (isIncome ? "Thu nhập" : "Chi tiêu"),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF2D3436),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      transaction.note ?? (isIncome ? "Thu nhập" : "Chi tiêu"),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFF2D3436),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat('HH:mm').format(transaction.transactionDate),
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('HH:mm').format(transaction.transactionDate),
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            Text(
-              "${isIncome ? '+' : '-'}${transaction.amount.toVnd()}",
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-                color: isIncome
-                    ? const Color(0xFF00B894)
-                    : const Color(0xFFFF7675),
+              Text(
+                "${isIncome ? '+' : '-'}${transaction.amount.toVnd()}",
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: isIncome
+                      ? const Color(0xFF00B894)
+                      : const Color(0xFFFF7675),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

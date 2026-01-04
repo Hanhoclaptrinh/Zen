@@ -29,4 +29,26 @@ class TransactionService {
       );
     }
   }
+
+  // update transaction
+  Future<void> updateTransaction(int id, Map<String, dynamic> data) async {
+    try {
+      await _apiClient.dio.put('/transactions/$id', data: data);
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to update transaction',
+      );
+    }
+  }
+
+  // delete transaction
+  Future<void> deleteTransaction(int id) async {
+    try {
+      await _apiClient.dio.delete('/transactions/$id');
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to delete transaction',
+      );
+    }
+  }
 }
