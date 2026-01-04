@@ -10,11 +10,15 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
+import { MailService } from 'src/mail/mail.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   // register logic
@@ -149,6 +153,74 @@ export class AuthService {
     });
 
     return { message: 'Password changed successfully' };
+  }
+
+  // forgot password logic
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new BadRequestException('Email not found');
+    }
+
+    // generate 4 digit otp
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const expires = new Date();
+    expires.setMinutes(expires.getMinutes() + 5); // 5 mins
+
+    await this.prisma.user.update({
+      where: { email },
+      data: {
+        resetCode: otp,
+        resetCodeExpires: expires,
+      },
+    });
+
+    // send email
+    await this.mailService.sendOtp(email, otp);
+
+    return { message: 'OTP sent to email' };
+  }
+
+  // verify otp logic
+  async verifyOtp(email: string, otp: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || user.resetCode !== otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (user.resetCodeExpires && user.resetCodeExpires < new Date()) {
+      throw new BadRequestException('OTP expired');
+    }
+
+    return { message: 'OTP valid' };
+  }
+
+  // reset password logic
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!user || user.resetCode !== dto.otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (user.resetCodeExpires && user.resetCodeExpires < new Date()) {
+      throw new BadRequestException('OTP expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { email: dto.email },
+      data: {
+        passwordHash: hashedPassword,
+        resetCode: null,
+        resetCodeExpires: null,
+      },
+    });
+
+    return { message: 'Password reset successfully' };
   }
 
   // sign token logic

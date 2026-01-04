@@ -72,4 +72,43 @@ class AuthService {
       );
     }
   }
+
+  Future<void> forgotPassword(String email) async {
+    try {
+      await _apiClient.dio.post(
+        '/auth/forgot-password',
+        data: {'email': email},
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Failed to send OTP');
+    }
+  }
+
+  Future<void> verifyOtp(String email, String otp) async {
+    try {
+      await _apiClient.dio.post(
+        '/auth/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Invalid OTP');
+    }
+  }
+
+  Future<void> resetPassword(
+    String email,
+    String otp,
+    String newPassword,
+  ) async {
+    try {
+      await _apiClient.dio.post(
+        '/auth/reset-password',
+        data: {'email': email, 'otp': otp, 'newPassword': newPassword},
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to reset password',
+      );
+    }
+  }
 }

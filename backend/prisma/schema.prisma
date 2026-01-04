@@ -12,6 +12,10 @@ model User {
   email String @unique
   passwordHash String
   fullName String?
+  
+  resetCode String?
+  resetCodeExpires DateTime?
+
   createdAt DateTime @default(now())
 
   categories Category[]
