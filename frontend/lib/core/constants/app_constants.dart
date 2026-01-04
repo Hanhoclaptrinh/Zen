@@ -1,3 +1,3 @@
 class AppConstants {
-  static const String baseUrl = 'http://192.168.1.3:3000';
+  static const String baseUrl = 'http://192.168.1.2:3000';
 }

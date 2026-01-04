@@ -1,10 +1,12 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/data/models/category_model.dart';
-import 'package:frontend/providers/app_providers.dart';
 import 'package:frontend/presentation/widgets/side_menu.dart';
+import 'package:frontend/providers/app_providers.dart';
 import 'package:intl/intl.dart';
 
 enum AnalysisTimeRange { week, month, year }
@@ -19,8 +21,9 @@ class ExpenseAnalysisScreen extends ConsumerStatefulWidget {
 
 class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  int _touchedIndex = -1;
-  AnalysisTimeRange _timeRange = AnalysisTimeRange.month;
+  int _touchedIndex = -1; // pie chart
+  int _barTouchedIndex = -1; // bar chart
+  AnalysisTimeRange _timeRange = AnalysisTimeRange.week;
 
   @override
   void initState() {
@@ -40,22 +43,20 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
     final allTransactions = transactionState.allTransactions;
     final allCategories = categoryState.categories;
 
-    // filter range
+    // data processing logic
     final now = DateTime.now();
     DateTime startDate;
     DateTime endDate = now;
 
     switch (_timeRange) {
       case AnalysisTimeRange.week:
-        // week
-        startDate = now.subtract(const Duration(days: 7));
+        startDate = now.subtract(const Duration(days: 6)); // 7 days inc today
         break;
       case AnalysisTimeRange.month:
-        // month
         startDate = DateTime(now.year, now.month, 1);
+        endDate = DateTime(now.year, now.month + 1, 0);
         break;
       case AnalysisTimeRange.year:
-        // year
         startDate = DateTime(now.year, 1, 1);
         break;
     }
@@ -65,40 +66,58 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
           t.transactionDate.isAfter(
             startDate.subtract(const Duration(seconds: 1)),
           ) &&
-          t.transactionDate.isBefore(
-            endDate.add(const Duration(days: 1)),
-          ); // inclusiveish
+          t.transactionDate.isBefore(endDate.add(const Duration(days: 1)));
     }).toList();
 
-    // total expense
     final totalExpense = periodTransactions.fold(
       0.0,
       (sum, t) => sum + t.amount,
     );
 
-    // trend spots
-    List<FlSpot> trendSpots = [];
+    // bar chart data prep
+    List<BarChartGroupData> barGroups = [];
     double maxY = 0;
+
+    void addBarGroup(int x, double y) {
+      if (y > maxY) maxY = y;
+      barGroups.add(
+        BarChartGroupData(
+          x: x,
+          barRods: [
+            BarChartRodData(
+              toY: y,
+              color: _barTouchedIndex == x
+                  ? AppColors.accent
+                  : AppColors.accent.withOpacity(0.3),
+              width: 16,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(6),
+              ),
+              backDrawRodData: BackgroundBarChartRodData(
+                show: true,
+                toY: maxY == 0 ? 100 : maxY * 1.1,
+                color: Colors.grey.withOpacity(0.05),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     if (_timeRange == AnalysisTimeRange.year) {
       for (int i = 1; i <= 12; i++) {
-        final monthTotal = periodTransactions
+        final val = periodTransactions
             .where((t) => t.transactionDate.month == i)
             .fold(0.0, (sum, t) => sum + t.amount);
-        if (monthTotal > maxY) maxY = monthTotal;
-        trendSpots.add(FlSpot(i.toDouble(), monthTotal));
+        addBarGroup(i, val);
       }
     } else {
-      // final days = _timeRange == AnalysisTimeRange.week ? 7 : now.day;
-      final daysCount = _timeRange == AnalysisTimeRange.month
-          ? DateTime(now.year, now.month + 1, 0).day
-          : 7;
+      final daysCount = _timeRange == AnalysisTimeRange.month ? endDate.day : 7;
 
-      for (int i = 1; i <= daysCount; i++) {
-        double val = 0;
-        if (_timeRange == AnalysisTimeRange.week) {
-          final date = startDate.add(Duration(days: i - 1));
-          val = periodTransactions
+      if (_timeRange == AnalysisTimeRange.week) {
+        for (int i = 0; i < 7; i++) {
+          final date = startDate.add(Duration(days: i));
+          final val = periodTransactions
               .where(
                 (t) =>
                     t.transactionDate.year == date.year &&
@@ -106,62 +125,77 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
                     t.transactionDate.day == date.day,
               )
               .fold(0.0, (sum, t) => sum + t.amount);
-        } else {
-          val = periodTransactions
+          addBarGroup(i, val);
+        }
+      } else {
+        for (int i = 1; i <= daysCount; i++) {
+          final val = periodTransactions
               .where((t) => t.transactionDate.day == i)
               .fold(0.0, (sum, t) => sum + t.amount);
+          addBarGroup(i, val);
         }
-        if (val > maxY) maxY = val;
-        trendSpots.add(FlSpot(i.toDouble(), val));
       }
     }
 
-    // pie chart
+    // pie chart data prep
     final Map<int, double> catTotals = {};
     for (var t in periodTransactions) {
       catTotals[t.categoryId] = (catTotals[t.categoryId] ?? 0) + t.amount;
     }
-
-    // convert IDs to Category Models
     final List<_CategoryData> categoryDataList = [];
     catTotals.forEach((id, amount) {
       final cat = allCategories.firstWhere(
         (c) => c.id == id,
-        orElse: () =>
-            CategoryModel(id: -1, name: 'Khác', type: CategoryType.expense),
+        orElse: () => CategoryModel(
+          id: -1,
+          name: 'Khác',
+          type: CategoryType.expense,
+          icon: Icons.help,
+          color: Colors.grey,
+        ),
       );
       categoryDataList.add(
-        _CategoryData(cat, amount, (amount / totalExpense) * 100),
+        _CategoryData(
+          cat,
+          amount,
+          totalExpense > 0 ? (amount / totalExpense) * 100 : 0,
+        ),
       );
     });
-    // sort by amount desc
     categoryDataList.sort((a, b) => b.amount.compareTo(a.amount));
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.grey[50],
-      drawer: const SideMenu(currentRoute: 'analysis'), // marker
+      backgroundColor: Colors.white,
+      drawer: const SideMenu(currentRoute: 'analysis'),
       appBar: AppBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         leading: IconButton(
-          icon: SvgPicture.asset("assets/menuico.svg"),
+          icon: SvgPicture.asset(
+            "assets/menuico.svg",
+            colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+          ),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        title: const Text(
-          "Phân tích",
+        title: Text(
+          "Phân tích tài chính",
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // time filter
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -170,40 +204,79 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
               ),
               child: Row(
                 children: [
-                  _buildTimeFilterOption("Tuần", AnalysisTimeRange.week),
-                  _buildTimeFilterOption("Tháng", AnalysisTimeRange.month),
-                  _buildTimeFilterOption("Năm", AnalysisTimeRange.year),
+                  _buildTimeFilter("7 Ngày", AnalysisTimeRange.week),
+                  _buildTimeFilter("Tháng này", AnalysisTimeRange.month),
+                  _buildTimeFilter("Năm nay", AnalysisTimeRange.year),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // total expense
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    "Tổng chi tiêu",
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    NumberFormat.currency(
+                      locale: 'vi_VN',
+                      symbol: 'đ',
+                    ).format(totalExpense),
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                    ),
+                  ),
                 ],
               ),
             ),
 
             const SizedBox(height: 32),
 
-            const Text(
-              "Tổng chi tiêu",
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              NumberFormat.currency(
-                locale: 'vi_VN',
-                symbol: 'đ',
-              ).format(totalExpense),
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -1,
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
             SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
+              height: 220,
+              child: BarChart(
+                BarChartData(
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (group) => AppColors.textPrimary,
+                      tooltipRoundedRadius: 8,
+                      tooltipPadding: const EdgeInsets.all(8),
+                      tooltipMargin: 8,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        return BarTooltipItem(
+                          NumberFormat.compact(locale: 'vi').format(rod.toY),
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                    ),
+                    touchCallback: (FlTouchEvent event, barTouchResponse) {
+                      setState(() {
+                        if (!event.isInterestedForInteractions ||
+                            barTouchResponse == null ||
+                            barTouchResponse.spot == null) {
+                          _barTouchedIndex = -1;
+                          return;
+                        }
+                        _barTouchedIndex =
+                            barTouchResponse.spot!.touchedBarGroupIndex;
+                      });
+                    },
+                  ),
                   titlesData: FlTitlesData(
                     show: true,
                     rightTitles: const AxisTitles(
@@ -218,234 +291,157 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 30,
-                        interval: _timeRange == AnalysisTimeRange.week ? 1 : 5,
-                        getTitlesWidget: (value, meta) {
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          final index = value.toInt();
+                          String text = '';
+
+                          if (_timeRange == AnalysisTimeRange.week) {
+                            if (index >= 0 && index < 7) {
+                              final date = startDate.add(Duration(days: index));
+                              text = DateFormat('E', 'vi').format(date); // Thứ
+                            }
+                          } else if (_timeRange == AnalysisTimeRange.year) {
+                            text = 'T$index';
+                          } else {
+                            if (index % 5 == 0 || index == 1) text = '$index';
+                          }
+
                           return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
+                            padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              value.toInt().toString(),
-                              style: const TextStyle(
-                                color: Colors.grey,
+                              text,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
                                 fontSize: 10,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           );
                         },
+                        reservedSize: 30,
                       ),
                     ),
                   ),
                   borderData: FlBorderData(show: false),
-                  minY: 0,
-                  maxY: maxY * 1.2,
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: trendSpots,
-                      isCurved: true,
-                      color: const Color(0xFF0057FF),
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: const Color(0xFF0057FF).withOpacity(0.05),
-                      ),
-                    ),
-                  ],
-                  lineTouchData: LineTouchData(
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipItems: (touchedSpots) {
-                        return touchedSpots.map((spot) {
-                          return LineTooltipItem(
-                            NumberFormat.compact(locale: 'vi').format(spot.y),
-                            const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          );
-                        }).toList();
-                      },
-                      tooltipRoundedRadius: 8,
-                      tooltipPadding: const EdgeInsets.all(8),
-                    ),
-                  ),
+                  gridData: const FlGridData(show: false),
+                  barGroups: barGroups,
                 ),
               ),
             ),
 
             const SizedBox(height: 40),
 
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Chi tiết danh mục",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+            Text(
+              "Danh mục chi tiêu",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 20),
 
             if (categoryDataList.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
-                child: Text(
-                  "Chưa có dữ liệu cho thời gian này",
-                  style: TextStyle(color: Colors.grey[400]),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    "Chưa có dữ liệu",
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
                 ),
               )
             else
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 150,
-                    width: 150,
-                    child: PieChart(
-                      PieChartData(
-                        sectionsSpace: 0,
-                        centerSpaceRadius: 40,
-                        sections: categoryDataList.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final data = entry.value;
-                          final isTouched = index == _touchedIndex;
-                          final radius = isTouched ? 60.0 : 50.0;
-                          return PieChartSectionData(
-                            color: data.category.color,
-                            value: data.amount,
-                            title: '',
-                            radius: radius,
-                          );
-                        }).toList(),
-                        pieTouchData: PieTouchData(
-                          touchCallback:
-                              (FlTouchEvent event, pieTouchResponse) {
-                                setState(() {
-                                  if (!event.isInterestedForInteractions ||
-                                      pieTouchResponse == null ||
-                                      pieTouchResponse.touchedSection == null) {
-                                    _touchedIndex = -1;
-                                    return;
-                                  }
-                                  _touchedIndex = pieTouchResponse
-                                      .touchedSection!
-                                      .touchedSectionIndex;
-                                });
-                              },
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Column(
-                      children: categoryDataList.take(5).map((data) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: data.category.color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  data.category.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 13,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                "${data.percentage.toStringAsFixed(1)}%",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-
-            const SizedBox(height: 20),
-
-            // list details
-            if (categoryDataList.isNotEmpty)
               Column(
-                children: categoryDataList.map((data) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade100),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
+                children: [
+                  // Donut Chart
+                  SizedBox(
+                    height: 200,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: data.category.color.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            data.category.icon,
-                            color: data.category.color,
-                            size: 20,
+                        PieChart(
+                          PieChartData(
+                            sectionsSpace: 4,
+                            centerSpaceRadius: 60,
+                            startDegreeOffset: -90,
+                            sections: categoryDataList.asMap().entries.map((
+                              entry,
+                            ) {
+                              final index = entry.key;
+                              final data = entry.value;
+                              final isTouched = index == _touchedIndex;
+                              final radius = isTouched ? 30.0 : 25.0;
+
+                              return PieChartSectionData(
+                                color: data.category.color,
+                                value: data.amount,
+                                title: '',
+                                radius: radius,
+                                badgeWidget: isTouched
+                                    ? _buildBadge(data.category.icon)
+                                    : null,
+                                badgePositionPercentageOffset: 1.3,
+                              );
+                            }).toList(),
+                            pieTouchData: PieTouchData(
+                              touchCallback:
+                                  (FlTouchEvent event, pieTouchResponse) {
+                                    setState(() {
+                                      if (!event.isInterestedForInteractions ||
+                                          pieTouchResponse == null ||
+                                          pieTouchResponse.touchedSection ==
+                                              null) {
+                                        _touchedIndex = -1;
+                                        return;
+                                      }
+                                      _touchedIndex = pieTouchResponse
+                                          .touchedSection!
+                                          .touchedSectionIndex;
+                                    });
+                                  },
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                data.category.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _touchedIndex != -1 &&
+                                      _touchedIndex < categoryDataList.length
+                                  ? "${categoryDataList[_touchedIndex].percentage.toStringAsFixed(1)}%"
+                                  : "Tổng",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "${data.percentage.toStringAsFixed(1)}% chi tiêu",
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 12,
-                                ),
+                            ),
+                            Text(
+                              _touchedIndex != -1 &&
+                                      _touchedIndex < categoryDataList.length
+                                  ? categoryDataList[_touchedIndex]
+                                        .category
+                                        .name
+                                  : "Tất cả",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
                               ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          NumberFormat.currency(
-                            locale: 'vi_VN',
-                            symbol: 'đ',
-                          ).format(data.amount),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  );
-                }).toList(),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // category list
+                  ...categoryDataList
+                      .map((data) => _buildCategoryItem(data))
+                      .toList(),
+                ],
               ),
           ],
         ),
@@ -453,25 +449,22 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
     );
   }
 
-  Widget _buildTimeFilterOption(String text, AnalysisTimeRange range) {
+  Widget _buildTimeFilter(String text, AnalysisTimeRange range) {
     final isSelected = _timeRange == range;
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _timeRange = range;
-          });
-        },
+        onTap: () => setState(() => _timeRange = range),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.08),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -483,11 +476,98 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.black : Colors.grey,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? Colors.black : Colors.grey[600],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBadge(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+      ),
+      child: Icon(icon, size: 16),
+    );
+  }
+
+  Widget _buildCategoryItem(_CategoryData data) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: data.category.color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              data.category.icon,
+              color: data.category.color,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      data.category.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                    Text(
+                      NumberFormat.currency(
+                        locale: 'vi_VN',
+                        symbol: 'đ',
+                      ).format(data.amount),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Stack(
+                  children: [
+                    Container(
+                      height: 4,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: data.percentage / 100,
+                      child: Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: data.category.color,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -497,6 +577,5 @@ class _CategoryData {
   final CategoryModel category;
   final double amount;
   final double percentage;
-
   _CategoryData(this.category, this.amount, this.percentage);
 }

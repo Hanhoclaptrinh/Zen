@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/core/utils/string_utils.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart';
 import 'package:frontend/presentation/screens/transactions/transaction_list_screen.dart';
@@ -33,11 +34,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       drawerEnableOpenDragGesture: true,
-      drawer: const SideMenu(currentRoute: 'home'), // marker
+      drawer: const SideMenu(currentRoute: 'home'),
       appBar: AppBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset("assets/menuico.svg"),
@@ -91,7 +92,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             "Xin chào, ${authState.user?.fullName ?? 'User'}",
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           Text(
@@ -105,7 +106,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ],
@@ -120,7 +121,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF130F40), Color(0xFF000000)],
+                        colors: [
+                          AppColors.gradientStart,
+                          AppColors.gradientEnd,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -163,10 +167,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: _SummaryCard(
                           title: "Thu",
                           amount: transactionState.totalIncome,
-                          color: const Color(0xFF00B894),
+                          color: AppColors.success,
                           icon: SvgPicture.asset(
                             "assets/adlico.svg",
-                            color: Colors.greenAccent,
+                            color: AppColors.success,
                           ),
                           onTap: () {
                             Navigator.push(
@@ -186,10 +190,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: _SummaryCard(
                           title: "Chi",
                           amount: transactionState.totalExpense,
-                          color: const Color(0xFFFF7675),
+                          color: AppColors.danger,
                           icon: SvgPicture.asset(
                             "assets/aurico.svg",
-                            color: Colors.redAccent,
+                            color: AppColors.danger,
                           ),
                           onTap: () {
                             Navigator.push(
@@ -219,12 +223,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       Text(
                         "${transactionState.filteredTransactions.length} giao dịch",
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -269,20 +276,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                           leading: CircleAvatar(
                                             backgroundColor:
                                                 transaction.type == 'income'
-                                                ? const Color(
-                                                    0xFF00B894,
-                                                  ).withOpacity(0.1)
-                                                : const Color(
-                                                    0xFFFF7675,
-                                                  ).withOpacity(0.1),
+                                                ? AppColors.success.withOpacity(
+                                                    0.1,
+                                                  )
+                                                : AppColors.danger.withOpacity(
+                                                    0.1,
+                                                  ),
                                             child: transaction.type == 'income'
                                                 ? SvgPicture.asset(
                                                     "assets/adlico.svg",
-                                                    color: Colors.greenAccent,
+                                                    color: AppColors.success,
                                                   )
                                                 : SvgPicture.asset(
                                                     "assets/aurico.svg",
-                                                    color: Colors.redAccent,
+                                                    color: AppColors.danger,
                                                   ),
                                           ),
                                           title: Text(
@@ -302,8 +309,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                               fontWeight: FontWeight.bold,
                                               color:
                                                   transaction.type == 'income'
-                                                  ? const Color(0xFF00B894)
-                                                  : const Color(0xFFFF7675),
+                                                  ? AppColors.success
+                                                  : AppColors.danger,
                                               fontSize: 16,
                                             ),
                                           ),
@@ -337,7 +344,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           );
         },
-        backgroundColor: const Color(0xFF0057FF),
+        backgroundColor: AppColors.primaryDark,
         child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
       ),
     );

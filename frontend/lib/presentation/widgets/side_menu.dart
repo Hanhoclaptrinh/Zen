@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/analysis/expense_analysis_screen.dart';
-import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
 import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:frontend/providers/app_providers.dart';
+import 'package:frontend/presentation/screens/profile/profile_screen.dart';
 
 class SideMenu extends ConsumerWidget {
   final String currentRoute;
@@ -19,7 +20,7 @@ class SideMenu extends ConsumerWidget {
     return SizedBox(
       width: screenWidth * 0.7,
       child: Drawer(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topRight: Radius.circular(32),
@@ -33,7 +34,7 @@ class SideMenu extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF130F40), Color(0xFF000000)],
+                  colors: [AppColors.gradientStart, AppColors.gradientEnd],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -128,27 +129,18 @@ class SideMenu extends ConsumerWidget {
                     title: 'Hồ sơ',
                     isSelected: currentRoute == 'profile',
                     onTap: () {
-                      Navigator.pop(context);
-                      // navigate to profile screen
-                    },
-                  ),
-                  const Divider(height: 40, thickness: 1),
-                  _buildModernDrawerItem(
-                    context,
-                    ref,
-                    icon: null,
-                    isLogout: true,
-                    title: 'Đăng xuất',
-                    isSelected: false,
-                    onTap: () {
-                      ref.read(authControllerProvider.notifier).logout();
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AuthChoiceScreen(),
-                        ),
-                        (route) => false,
-                      );
+                      if (currentRoute == 'profile') {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => const ProfileScreen(),
+                            transitionDuration: Duration.zero,
+                          ),
+                        );
+                      }
                     },
                   ),
                 ],
@@ -178,8 +170,8 @@ class SideMenu extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     final color = isLogout
-        ? Colors.redAccent
-        : (isSelected ? const Color(0xFF0057FF) : Colors.black87);
+        ? AppColors.danger
+        : (isSelected ? AppColors.primaryDark : AppColors.textPrimary);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -191,7 +183,7 @@ class SideMenu extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF0057FF).withOpacity(0.1)
+                ? AppColors.primaryDark.withOpacity(0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
