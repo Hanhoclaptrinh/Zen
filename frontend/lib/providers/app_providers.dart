@@ -104,6 +104,32 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  // cho phep cap nhat ho so nguoi dung
+  Future<bool> updateProfile(String fullName) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final updatedUser = await _authService.updateProfile(fullName);
+      state = state.copyWith(isLoading: false, user: updatedUser);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  // thay doi mat khau
+  Future<bool> changePassword(String oldPassword, String newPassword) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _authService.changePassword(oldPassword, newPassword);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
   void logout() {
     _apiClient.clearToken();
     state = AuthState();

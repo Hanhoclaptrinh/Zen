@@ -45,4 +45,31 @@ class AuthService {
       throw Exception(e.response?.data['message'] ?? 'Failed to fetch profile');
     }
   }
+
+  Future<UserModel> updateProfile(String fullName) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/auth/profile',
+        data: {'fullName': fullName},
+      );
+      return UserModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to update profile',
+      );
+    }
+  }
+
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    try {
+      await _apiClient.dio.post(
+        '/auth/change-password',
+        data: {'oldPassword': oldPassword, 'newPassword': newPassword},
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to change password',
+      );
+    }
+  }
 }

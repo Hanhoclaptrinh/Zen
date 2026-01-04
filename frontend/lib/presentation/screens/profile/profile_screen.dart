@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
+import 'package:frontend/presentation/screens/profile/change_password_screen.dart'; // Import
 import 'package:frontend/presentation/widgets/side_menu.dart';
 import 'package:frontend/providers/app_providers.dart';
 
@@ -89,14 +90,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                GestureDetector(
+                  onTap: () => _showEditProfileDialog(context, user?.fullName),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 14,
+                    ),
                   ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 14),
                 ),
               ],
             ),
@@ -135,13 +143,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildSettingsItem(
                 icon: Icons.person_outline,
                 title: "Thông tin cá nhân",
-                onTap: () {},
+                onTap: () => _showEditProfileDialog(context, user?.fullName),
               ),
               _buildDivider(),
               _buildSettingsItem(
                 icon: Icons.lock_outline,
                 title: "Đổi mật khẩu",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChangePasswordScreen(),
+                    ),
+                  );
+                },
               ),
             ]),
 
@@ -293,6 +308,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       thickness: 1,
       indent: 60,
       color: Colors.grey[100],
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context, String? currentName) {
+    final nameController = TextEditingController(text: currentName);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Cập nhật thông tin"),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(
+              labelText: "Họ và tên",
+              border: OutlineInputBorder(),
+            ),
+            textCapitalization: TextCapitalization.words,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Hủy", style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newName = nameController.text.trim();
+                if (newName.isNotEmpty) {
+                  final success = await ref
+                      .read(authControllerProvider.notifier)
+                      .updateProfile(newName);
+                  if (success && mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Cập nhật thành công"),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Lưu"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
