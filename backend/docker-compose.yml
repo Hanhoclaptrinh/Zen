@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql-dev
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: vinhhan071204
+      MYSQL_DATABASE: zen
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          'localhost',
+          '-u',
+          'root',
+          '-pvinhhan071204',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nestjs_app:
+    build: .
+    container_name: nestjs_container
+    restart: always
+    ports:
+      - '3000:3000'
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${DATABASE_URL_DOCKER}
+      - DB_HOST=mysql_db
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=vinhhan071204
+      - DB_NAME=zen
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_EXPIRES_TTL=${JWT_EXPIRES_TTL}
+      - SMTP_PASS=${SMTP_PASS}
+
+volumes:
+  mysql_data:
