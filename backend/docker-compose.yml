@@ -41,10 +41,13 @@ services:
       - DB_HOST=mysql_db
       - DB_PORT=3306
       - DB_USERNAME=root
-      - DB_PASSWORD=vinhhan071204
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - DB_NAME=zen
       - SECRET_KEY=${SECRET_KEY}
       - JWT_EXPIRES_TTL=${JWT_EXPIRES_TTL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
 
 volumes:
