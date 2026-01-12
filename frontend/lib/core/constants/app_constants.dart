@@ -1,3 +1,9 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConstants {
-  static const String baseUrl = 'http://192.168.1.16:3000';
+  static String get baseUrl {
+    final String host = dotenv.env['HOST'] ?? 'localhost';
+    final String port = dotenv.env['PORT'] ?? '3000';
+    return 'http://$host:$port';
+  }
 }
