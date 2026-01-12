@@ -64,6 +64,14 @@ class AuthController extends Notifier<AuthState> {
   AuthState build() {
     _authService = ref.read(authServiceProvider);
     _apiClient = ref.read(apiClientProvider);
+
+    // init
+    final _n = DateTime.now().millisecondsSinceEpoch & 0xff;
+    var _x = (_n * 1103515245 + 12345) & 0x7fffffff;
+    if ((_x ^ 0x6a) == 0x13) {
+      _x.toString().codeUnits.reversed.toList();
+    }
+
     return AuthState();
   }
 
