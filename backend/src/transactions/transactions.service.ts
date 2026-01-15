@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
+import { CategoryType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 
@@ -10,7 +11,10 @@ export class TransactionsService {
     return this.prisma.transaction.findMany({
       where: { userId },
       orderBy: { transactionDate: 'desc' },
-      include: { category: true },
+      include: { 
+        category: true,
+        splitDetails: true,
+      },
     });
   }
 
@@ -34,8 +38,19 @@ export class TransactionsService {
         type: dto.type,
         note: dto.note,
         transactionDate: new Date(dto.transactionDate),
+        isSplit: dto.isSplit || false,
         userId,
         categoryId: dto.categoryId,
+        splitDetails: dto.isSplit && dto.splitDetails ? {
+          create: dto.splitDetails.map(split => ({
+            name: split.name,
+            amount: split.amount,
+            isPaid: split.isPaid ?? false,
+          })),
+        } : undefined,
+      },
+      include: {
+        splitDetails: true,
       },
     });
   }
@@ -65,15 +80,33 @@ export class TransactionsService {
       }
     }
 
-    return this.prisma.transaction.update({
-      where: { id },
-      data: {
-        amount: dto.amount,
-        type: dto.type,
-        note: dto.note,
-        transactionDate: new Date(dto.transactionDate),
-        categoryId: dto.categoryId,
-      },
+    // update transaction and handle splitDetails (delete old, create new if isSplit is true)
+    return this.prisma.$transaction(async (tx) => {
+      await tx.splitDetail.deleteMany({
+        where: { transactionId: id },
+      });
+
+      return tx.transaction.update({
+        where: { id },
+        data: {
+          amount: dto.amount,
+          type: dto.type,
+          note: dto.note,
+          transactionDate: new Date(dto.transactionDate),
+          isSplit: dto.isSplit || false,
+          categoryId: dto.categoryId,
+          splitDetails: dto.isSplit && dto.splitDetails ? {
+            create: dto.splitDetails.map(split => ({
+              name: split.name,
+              amount: split.amount,
+              isPaid: split.isPaid ?? false,
+            })),
+          } : undefined,
+        },
+        include: {
+          splitDetails: true,
+        },
+      });
     });
   }
 

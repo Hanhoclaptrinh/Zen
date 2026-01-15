@@ -79,30 +79,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 24,
-                        backgroundColor: Colors.grey,
-                        child: Icon(Icons.person, color: Colors.white),
+                        backgroundColor: AppColors.accent.withOpacity(0.1),
+                        child: const Icon(
+                          Icons.person_outline_rounded,
+                          color: AppColors.accent,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Xin chào, ${authState.user?.fullName ?? 'User'}",
+                            "Chào buổi sáng,",
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
                             ),
                           ),
                           Text(
-                            transactionState.filterMode == FilterMode.day
-                                ? DateFormat('dd MMM, yyyy', 'vi_VN')
-                                      .format(transactionState.selectedDate)
-                                      .capitalize()
-                                : DateFormat('MMMM, yyyy', 'vi_VN')
-                                      .format(transactionState.selectedDate)
-                                      .capitalize(),
+                            authState.user?.fullName ?? 'User',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -111,6 +108,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                         ],
                       ),
+                      const Spacer(),
+                      Text(
+                        transactionState.filterMode == FilterMode.day
+                            ? DateFormat(
+                                'dd/MM',
+                              ).format(transactionState.selectedDate)
+                            : DateFormat(
+                                'MM/yyyy',
+                              ).format(transactionState.selectedDate),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
 
@@ -118,41 +130,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 32,
+                      horizontal: 24,
+                    ),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          AppColors.gradientStart,
-                          AppColors.gradientEnd,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(24),
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blue.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
                     child: Column(
                       children: [
                         Text(
-                          "Số dư hiện tại",
+                          "Tổng số dư",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withOpacity(0.6),
                             fontSize: 14,
+                            letterSpacing: 1,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
-                          "${transactionState.monthlyBalance.toVnd()}",
+                          transactionState.monthlyBalance.toVnd(),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ],

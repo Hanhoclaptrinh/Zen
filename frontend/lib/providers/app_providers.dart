@@ -2,10 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/data/models/category_model.dart';
 import 'package:frontend/data/models/transaction_model.dart';
 import 'package:frontend/data/models/user_model.dart';
+import 'package:frontend/data/models/budget_model.dart';
 import 'package:frontend/data/services/api_client.dart';
 import 'package:frontend/data/services/auth_service.dart';
 import 'package:frontend/data/services/category_service.dart';
 import 'package:frontend/data/services/transaction_service.dart';
+import 'package:frontend/data/services/budget_service.dart';
 
 // providers
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -26,6 +28,94 @@ final categoryServiceProvider = Provider<CategoryService>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return CategoryService(apiClient);
 });
+
+final budgetServiceProvider = Provider<BudgetService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return BudgetService(apiClient);
+});
+
+// ... AuthState, AuthController, etc.
+
+// budget state
+class BudgetState {
+  final bool isLoading;
+  final List<BudgetModel> budgets;
+  final String? error;
+
+  BudgetState({this.isLoading = false, this.budgets = const [], this.error});
+
+  BudgetState copyWith({
+    bool? isLoading,
+    List<BudgetModel>? budgets,
+    String? error,
+  }) {
+    return BudgetState(
+      isLoading: isLoading ?? this.isLoading,
+      budgets: budgets ?? this.budgets,
+      error: error,
+    );
+  }
+}
+
+class BudgetController extends Notifier<BudgetState> {
+  late BudgetService _service;
+
+  @override
+  BudgetState build() {
+    _service = ref.read(budgetServiceProvider);
+    return BudgetState();
+  }
+
+  Future<void> fetchBudgets() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final budgets = await _service.getBudgets();
+      state = state.copyWith(isLoading: false, budgets: budgets);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<bool> addBudget(Map<String, dynamic> data) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _service.createBudget(data);
+      await fetchBudgets();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateBudget(int id, Map<String, dynamic> data) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _service.updateBudget(id, data);
+      await fetchBudgets();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> deleteBudget(int id) async {
+    try {
+      await _service.deleteBudget(id);
+      await fetchBudgets();
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+}
+
+final budgetControllerProvider =
+    NotifierProvider<BudgetController, BudgetState>(BudgetController.new);
+
+// ... rest of the file
 
 // auth state
 class AuthState {

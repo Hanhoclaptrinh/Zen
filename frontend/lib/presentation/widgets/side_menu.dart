@@ -6,6 +6,7 @@ import 'package:frontend/presentation/screens/analysis/expense_analysis_screen.d
 import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:frontend/providers/app_providers.dart';
 import 'package:frontend/presentation/screens/profile/profile_screen.dart';
+import 'package:frontend/presentation/screens/budget/budget_screen.dart';
 
 class SideMenu extends ConsumerWidget {
   final String currentRoute;
@@ -33,21 +34,17 @@ class SideMenu extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.gradientStart, AppColors.gradientEnd],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.only(topRight: Radius.circular(32)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 35,
-                    backgroundColor: Colors.white24,
-                    child: Icon(
-                      Icons.person_rounded,
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    child: const Icon(
+                      Icons.person_outline_rounded,
                       size: 40,
                       color: Colors.white,
                     ),
@@ -65,7 +62,7 @@ class SideMenu extends ConsumerWidget {
                   Text(
                     authState.user?.email ?? 'user@gmail.com',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withOpacity(0.5),
                       fontSize: 13,
                     ),
                   ),
@@ -137,6 +134,27 @@ class SideMenu extends ConsumerWidget {
                           context,
                           PageRouteBuilder(
                             pageBuilder: (_, __, ___) => const ProfileScreen(),
+                            transitionDuration: Duration.zero,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  _buildModernDrawerItem(
+                    context,
+                    ref,
+                    icon: "assets/aurico.svg",
+                    title: 'Hạn mức',
+                    isSelected: currentRoute == 'budget',
+                    onTap: () {
+                      if (currentRoute == 'budget') {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => const BudgetScreen(),
                             transitionDuration: Duration.zero,
                           ),
                         );

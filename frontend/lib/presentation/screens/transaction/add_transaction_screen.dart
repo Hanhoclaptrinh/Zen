@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/data/models/category_model.dart';
-import 'package:frontend/data/models/transaction_model.dart'; // Import
+import 'package:frontend/data/models/transaction_model.dart';
 import 'package:frontend/providers/app_providers.dart';
 import 'package:intl/intl.dart';
 
@@ -42,6 +42,8 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
 class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   late PageController _pageController;
   bool _isIncome = false;
+  bool _isSplit = false;
+  final List<Map<String, dynamic>> _splitDetails = [];
 
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
@@ -61,7 +63,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       ).format(t.amount).trim();
       _noteController.text = t.note ?? '';
       _selectedDate = t.transactionDate;
-      // category will be set after fetching categories
+      _isSplit = t.isSplit;
+      if (t.splitDetails != null) {
+        for (var split in t.splitDetails!) {
+          _splitDetails.add({
+            'name': split.name,
+            'amount': split.amount,
+            'isPaid': split.isPaid,
+          });
+        }
+      }
     }
 
     _pageController = PageController(initialPage: _isIncome ? 1 : 0);
@@ -93,6 +104,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     super.dispose();
   }
 
+  void _addSplitPerson() {
+    setState(() {
+      _splitDetails.add({'name': '', 'amount': 0.0, 'isPaid': false});
+    });
+  }
+
+  void _removeSplitPerson(int index) {
+    setState(() {
+      _splitDetails.removeAt(index);
+    });
+  }
+
   // chon ngay
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -104,7 +127,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0057FF),
+              primary: AppColors.primary,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -134,16 +157,33 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       return;
     }
 
-    final double amount = double.parse(amountText);
+    final double totalAmount = double.parse(amountText);
+
+    if (_isSplit) {
+      double splitSum = 0;
+      for (var split in _splitDetails) {
+        if (split['name'].toString().isEmpty) {
+          _showError('Vui lòng nhập tên người chia');
+          return;
+        }
+        splitSum += double.parse(split['amount'].toString());
+      }
+      if (splitSum > totalAmount) {
+        _showError('Tổng tiền chia vượt quá số tiền giao dịch');
+        return;
+      }
+    }
 
     final data = {
-      'amount': amount,
+      'amount': totalAmount,
       'note': _noteController.text,
       'type': _selectedCategory!.type == CategoryType.income
           ? 'income'
           : 'expense',
       'categoryId': _selectedCategory!.id,
       'transactionDate': _selectedDate.toIso8601String(),
+      'isSplit': _isSplit,
+      'splitDetails': _isSplit ? _splitDetails : null,
     };
 
     bool success;
@@ -169,9 +209,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -216,7 +260,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                           'expense',
                           selectedType,
                           (val) => setState(() => selectedType = val),
-                          const Color(0xFFFF7675),
+                          AppColors.danger,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -226,7 +270,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                           'income',
                           selectedType,
                           (val) => setState(() => selectedType = val),
-                          const Color(0xFF00B894),
+                          AppColors.accent,
                         ),
                       ),
                     ],
@@ -238,7 +282,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
                     "Hủy",
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
                 ElevatedButton(
@@ -259,7 +303,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0057FF),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -291,7 +335,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         decoration: BoxDecoration(
           color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
           border: Border.all(
-            color: isSelected ? color : Colors.grey[300]!,
+            color: isSelected ? color : AppColors.border,
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -300,7 +344,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? color : Colors.grey[600],
+            color: isSelected ? color : AppColors.textSecondary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -311,7 +355,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     final categoryState = ref.watch(categoryControllerProvider);
-
     final expenseCategories = categoryState.categories
         .where((c) => c.type == CategoryType.expense)
         .toList();
@@ -320,20 +363,24 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: Colors.black, size: 28),
+          icon: const Icon(
+            Icons.close_rounded,
+            color: AppColors.textPrimary,
+            size: 28,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: widget.transaction != null
             ? const Text(
-                "Chỉnh sửa giao dịch",
+                "Sửa giao dịch",
                 style: TextStyle(
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               )
@@ -341,61 +388,57 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         actions: [
           IconButton(
             onPressed: () => _showAddCategoryDialog(context),
-            icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: AppColors.textPrimary,
+            ),
             tooltip: "Thêm danh mục",
           ),
         ],
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          _buildAmountInput(),
-          const SizedBox(height: 20),
-          Expanded(
-            child: Container(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            _buildAmountInput(),
+            const SizedBox(height: 32),
+            Container(
               width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 20,
-                    offset: Offset(0, -5),
-                  ),
-                ],
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(36),
+                ),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildDatePicker()),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildNoteInput()),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDatePicker()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildNoteInput()),
+                    ],
                   ),
-
                   const SizedBox(height: 24),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Danh mục",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
+                  if (!_isIncome) ...[
+                    _buildSplitToggle(),
+                    if (_isSplit) _buildSplitDetailsList(),
+                    const SizedBox(height: 24),
+                  ],
+                  const Text(
+                    "Danh mục",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  Expanded(
+                  SizedBox(
+                    height: 280,
                     child: categoryState.isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : PageView(
@@ -404,6 +447,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                               setState(() {
                                 _isIncome = index == 1;
                                 _selectedCategory = null;
+                                if (_isIncome) _isSplit = false;
                               });
                             },
                             children: [
@@ -412,34 +456,27 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                             ],
                           ),
                   ),
-
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: SizedBox(
           width: double.infinity,
-          height: 56,
+          height: 60,
           child: ElevatedButton(
             onPressed: _saveTransaction,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _isIncome
-                  ? const Color(0xFF00B894)
-                  : const Color(0xFFFF7675),
+              backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               elevation: 4,
-              shadowColor:
-                  (_isIncome
-                          ? const Color(0xFF00B894)
-                          : const Color(0xFFFF7675))
-                      .withOpacity(0.4),
+              shadowColor: AppColors.primary.withOpacity(0.4),
             ),
             child: Text(
               widget.transaction != null ? "Lưu thay đổi" : "Lưu giao dịch",
@@ -452,7 +489,112 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Widget _buildSplitToggle() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.people_outline_rounded,
+                color: AppColors.textSecondary,
+              ),
+              SizedBox(width: 12),
+              Text(
+                "Chia tiền cho nhiều người",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          Switch(
+            value: _isSplit,
+            onChanged: (val) => setState(() => _isSplit = val),
+            activeColor: AppColors.accent,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSplitDetailsList() {
+    return Column(
+      children: [
+        ..._splitDetails.asMap().entries.map((entry) {
+          int idx = entry.key;
+          var detail = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    onChanged: (val) => _splitDetails[idx]['name'] = val,
+                    decoration: InputDecoration(
+                      hintText: "Tên người",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    controller: TextEditingController(text: detail['name']),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) => _splitDetails[idx]['amount'] =
+                        double.tryParse(val) ?? 0.0,
+                    decoration: InputDecoration(
+                      hintText: "Số tiền",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    controller: TextEditingController(
+                      text: detail['amount'] == 0.0
+                          ? ''
+                          : detail['amount'].toString(),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.remove_circle_outline,
+                    color: AppColors.danger,
+                  ),
+                  onPressed: () => _removeSplitPerson(idx),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+        TextButton.icon(
+          onPressed: _addSplitPerson,
+          icon: const Icon(Icons.add, size: 20),
+          label: const Text("Thêm người"),
+          style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+        ),
+      ],
     );
   }
 
@@ -460,14 +602,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildToggleItem("Chi tiêu", false),
-          const SizedBox(width: 4),
           _buildToggleItem("Thu nhập", true),
         ],
       ),
@@ -486,21 +627,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? (isIncomeTab
-                    ? const Color(0xFF00B894)
-                    : const Color(0xFFFF7675))
-              : Colors.transparent,
+          color: isSelected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           text,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey[600],
+            color: isSelected ? Colors.white : AppColors.textSecondary,
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: 13,
           ),
         ),
       ),
@@ -512,7 +649,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       children: [
         const Text(
           "Số tiền",
-          style: TextStyle(color: Colors.grey, fontSize: 14),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
         IntrinsicWidth(
           child: TextField(
@@ -520,22 +657,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
             autofocus: true,
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: _isIncome
-                  ? const Color(0xFF00B894)
-                  : const Color(0xFFFF7675),
+            style: const TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -1,
             ),
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: "0",
               hintStyle: TextStyle(color: Colors.grey[300]),
               suffixText: "đ",
-              suffixStyle: TextStyle(
+              suffixStyle: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[400],
+                color: AppColors.textSecondary,
               ),
             ),
             inputFormatters: [
@@ -548,28 +684,27 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     );
   }
 
-  // Shared Date Picker
   Widget _buildDatePicker() {
     return GestureDetector(
       onTap: () => _selectDate(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
-            SvgPicture.asset("assets/cldico.svg"),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                DateFormat('dd/MM/yyyy').format(_selectedDate),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
+            const Icon(
+              Icons.calendar_today_rounded,
+              size: 18,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              DateFormat('dd/MM/yyyy').format(_selectedDate),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
           ],
         ),
@@ -581,16 +716,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
       ),
       child: TextField(
         controller: _noteController,
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           border: InputBorder.none,
           hintText: "Ghi chú...",
-          hintStyle: TextStyle(color: Colors.grey[500], fontSize: 13),
-          icon: SvgPicture.asset("assets/noteico.svg"),
+          hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          icon: Icon(Icons.edit_note_rounded, color: AppColors.textSecondary),
         ),
         style: const TextStyle(fontSize: 13),
       ),
@@ -599,11 +735,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   Widget _buildCategoryPage(List<CategoryModel> categories) {
     if (categories.isEmpty) {
-      return Center(
+      return const Center(
         child: Text(
           "Chưa có danh mục.\nNhấn dấu + để thêm.",
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey[500]),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
       );
     }
@@ -636,25 +772,25 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 height: 56,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isSelected ? category.color : Colors.grey[50],
+                  color: isSelected ? AppColors.primary : Colors.white,
                   shape: BoxShape.circle,
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: category.color.withOpacity(0.4),
+                            color: AppColors.primary.withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
                         ]
                       : [],
                   border: Border.all(
-                    color: isSelected ? Colors.transparent : Colors.grey[200]!,
+                    color: isSelected ? Colors.transparent : AppColors.border,
                     width: 1.5,
                   ),
                 ),
                 child: Icon(
                   category.icon,
-                  color: isSelected ? Colors.white : category.color,
+                  color: isSelected ? Colors.white : AppColors.primary,
                   size: 24,
                 ),
               ),
@@ -665,7 +801,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? Colors.black87 : Colors.grey[600],
+                  color: isSelected
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

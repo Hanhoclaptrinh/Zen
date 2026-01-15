@@ -1,5 +1,7 @@
-import { IsEnum, IsNumber, IsOptional, IsDateString } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsDateString, IsBoolean, IsArray, ValidateNested, IsString } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { SplitDetailDto } from "./split-detail.dto";
 
 export class CreateTransactionDto {
     @ApiProperty({ example: 50000 })
@@ -22,5 +24,18 @@ export class CreateTransactionDto {
     // ghi chu giao dich
     @ApiProperty({ example: 'Ăn trưa', required: false })
     @IsOptional()
+    @IsString()
     note?: string;
+
+    @ApiProperty({ example: false, required: false })
+    @IsOptional()
+    @IsBoolean()
+    isSplit?: boolean;
+
+    @ApiProperty({ type: [SplitDetailDto], required: false })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => SplitDetailDto)
+    splitDetails?: SplitDetailDto[];
 }
