@@ -4,7 +4,10 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import type { AuthRequest } from 'src/common/types/auth-request';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Categories')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('categories')
 export class CategoriesController {
