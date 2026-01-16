@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:frontend/presentation/screens/auth/register_screen.dart';
 import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
@@ -24,7 +26,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin'), backgroundColor: AppColors.danger),
       );
       return;
     }
@@ -52,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (error != null && mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error)));
+        ).showSnackBar(SnackBar(content: Text("Sai email hoặc mật khẩu"), backgroundColor: AppColors.danger,));
       }
     }
   }
@@ -162,17 +164,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _SocialButton(
-                          icon: Icons.facebook,
-                          color: const Color(0xFF1877F2),
+                          asset: "assets/fbico.svg",
                         ),
                         const SizedBox(width: 20),
                         _SocialButton(
-                          icon: Icons.g_mobiledata,
-                          color: Colors.red,
-                          iconSize: 36,
+                          asset: "assets/ggico.svg",
                         ),
-                        const SizedBox(width: 20),
-                        _SocialButton(icon: Icons.apple, color: Colors.black),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -239,34 +236,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final double iconSize;
+  final String asset;
 
-  const _SocialButton({
-    required this.icon,
-    required this.color,
-    this.iconSize = 28,
-  });
+  const _SocialButton({required this.asset});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 60,
-      height: 60,
+      width: 56,
+      height: 56,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade100,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Icon(icon, color: color, size: iconSize),
+      child: SvgPicture.asset(
+        asset,
+      ),
     );
   }
 }

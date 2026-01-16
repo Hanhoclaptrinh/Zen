@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/data/models/budget_model.dart';
 import 'package:frontend/data/models/category_model.dart';
@@ -220,13 +221,14 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
+      drawerEnableOpenDragGesture: true,
       drawer: const SideMenu(currentRoute: 'budget'),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black),
+          icon: SvgPicture.asset("assets/menuico.svg"),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         title: const Text(
@@ -234,40 +236,49 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: budgetState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : budgetState.budgets.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.account_balance_wallet_outlined,
-                    size: 64,
-                    color: Colors.grey[300],
+      body: SafeArea(
+        child: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            if (details.primaryVelocity! > 0) {
+              _scaffoldKey.currentState?.openDrawer();
+            }
+          },
+          child: budgetState.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : budgetState.budgets.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 64,
+                        color: Colors.grey[300],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Chưa có hạn mức nào",
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddBudgetDialog(),
+                        icon: const Icon(Icons.add),
+                        label: const Text("Thiết lập ngay"),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Chưa có hạn mức nào",
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddBudgetDialog(),
-                    icon: const Icon(Icons.add),
-                    label: const Text("Thiết lập ngay"),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(24),
-              itemCount: budgetState.budgets.length,
-              itemBuilder: (context, index) {
-                final budget = budgetState.budgets[index];
-                return _buildBudgetCard(budget);
-              },
-            ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(24),
+                  itemCount: budgetState.budgets.length,
+                  itemBuilder: (context, index) {
+                    final budget = budgetState.budgets[index];
+                    return _buildBudgetCard(budget);
+                  },
+                ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddBudgetDialog(),
         backgroundColor: AppColors.primary,

@@ -26,6 +26,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.background,
+      drawerEnableOpenDragGesture: true,
       drawer: const SideMenu(currentRoute: 'profile'),
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -50,187 +51,208 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          children: [
-            Stack(
-              alignment: Alignment.bottomRight,
+      body: SafeArea(
+        child: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            if (details.primaryVelocity! > 0) {
+              _scaffoldKey.currentState?.openDrawer();
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
               children: [
-                Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE0EAFC), Color(0xFFCFDEF3)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                       ),
-                    ],
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE0EAFC), Color(0xFFCFDEF3)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      child: Center(
+                        child: Text(
+                          user?.fullName?.isNotEmpty == true
+                              ? user!.fullName![0].toUpperCase()
+                              : "U",
+                          style: const TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () =>
+                          _showEditProfileDialog(context, user?.fullName),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  user?.fullName ?? "User",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    user?.email ?? "user@gmail.com",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
                     ),
                   ),
-                  child: Center(
-                    child: Text(
-                      user?.fullName?.isNotEmpty == true
-                          ? user!.fullName![0].toUpperCase()
-                          : "U",
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                ),
+
+                const SizedBox(height: 32),
+
+                // menu group
+                _buildGroupTitle("Tài khoản"),
+                _buildSettingsGroup([
+                  _buildSettingsItem(
+                    icon: Icons.person_outline,
+                    title: "Thông tin cá nhân",
+                    onTap: () =>
+                        _showEditProfileDialog(context, user?.fullName),
+                  ),
+                  _buildDivider(),
+                  _buildSettingsItem(
+                    icon: Icons.lock_outline,
+                    title: "Đổi mật khẩu",
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChangePasswordScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ]),
+
+                const SizedBox(height: 24),
+
+                _buildGroupTitle("Ứng dụng"),
+                _buildSettingsGroup([
+                  _buildSettingsItem(
+                    icon: Icons.notifications_outlined,
+                    title: "Thông báo",
+                    trailing: Switch.adaptive(
+                      value: true,
+                      onChanged: (val) {},
+                      activeColor: AppColors.primary,
+                    ),
+                    onTap: () {},
+                  ),
+                  _buildDivider(),
+                  _buildSettingsItem(
+                    icon: Icons.language,
+                    title: "Ngôn ngữ",
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text(
+                          "Tiếng Việt",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
+                    onTap: () {},
+                  ),
+                ]),
+
+                const SizedBox(height: 32),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () {
+                      ref.read(authControllerProvider.notifier).logout();
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AuthChoiceScreen(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      backgroundColor: AppColors.danger.withOpacity(0.08),
+                      foregroundColor: AppColors.danger,
+                    ),
+                    child: const Text(
+                      "Đăng xuất",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => _showEditProfileDialog(context, user?.fullName),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
+                const SizedBox(height: 20),
+                Text(
+                  "Zen - 2026",
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              user?.fullName ?? "User",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                user?.email ?? "user@gmail.com",
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // menu group
-            _buildGroupTitle("Tài khoản"),
-            _buildSettingsGroup([
-              _buildSettingsItem(
-                icon: Icons.person_outline,
-                title: "Thông tin cá nhân",
-                onTap: () => _showEditProfileDialog(context, user?.fullName),
-              ),
-              _buildDivider(),
-              _buildSettingsItem(
-                icon: Icons.lock_outline,
-                title: "Đổi mật khẩu",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ChangePasswordScreen(),
-                    ),
-                  );
-                },
-              ),
-            ]),
-
-            const SizedBox(height: 24),
-
-            _buildGroupTitle("Ứng dụng"),
-            _buildSettingsGroup([
-              _buildSettingsItem(
-                icon: Icons.notifications_outlined,
-                title: "Thông báo",
-                trailing: Switch.adaptive(
-                  value: true,
-                  onChanged: (val) {},
-                  activeColor: AppColors.primary,
-                ),
-                onTap: () {},
-              ),
-              _buildDivider(),
-              _buildSettingsItem(
-                icon: Icons.language,
-                title: "Ngôn ngữ",
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Text(
-                      "Tiếng Việt",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                  ],
-                ),
-                onTap: () {},
-              ),
-            ]),
-
-            const SizedBox(height: 32),
-
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () {
-                  ref.read(authControllerProvider.notifier).logout();
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AuthChoiceScreen(),
-                    ),
-                    (route) => false,
-                  );
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  backgroundColor: AppColors.danger.withOpacity(0.08),
-                  foregroundColor: AppColors.danger,
-                ),
-                child: const Text(
-                  "Đăng xuất",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Zen - 2026",
-              style: TextStyle(color: Colors.grey[400], fontSize: 12),
-            ),
-          ],
+          ),
         ),
       ),
     );

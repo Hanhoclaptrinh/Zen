@@ -167,6 +167,7 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
+      drawerEnableOpenDragGesture: true,
       drawer: const SideMenu(currentRoute: 'analysis'),
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -189,261 +190,281 @@ class _ExpenseAnalysisScreenState extends ConsumerState<ExpenseAnalysisScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // time filter
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  _buildTimeFilter("7 Ngày", AnalysisTimeRange.week),
-                  _buildTimeFilter("Tháng này", AnalysisTimeRange.month),
-                  _buildTimeFilter("Năm nay", AnalysisTimeRange.year),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // total expense
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    "Tổng chi tiêu",
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+      body: SafeArea(
+        child: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            if (details.primaryVelocity! > 0) {
+              _scaffoldKey.currentState?.openDrawer();
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // time filter
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    NumberFormat.currency(
-                      locale: 'vi_VN',
-                      symbol: 'đ',
-                    ).format(totalExpense),
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    ),
+                  child: Row(
+                    children: [
+                      _buildTimeFilter("7 Ngày", AnalysisTimeRange.week),
+                      _buildTimeFilter("Tháng này", AnalysisTimeRange.month),
+                      _buildTimeFilter("Năm nay", AnalysisTimeRange.year),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+                const SizedBox(height: 32),
 
-            const SizedBox(height: 32),
-
-            SizedBox(
-              height: 220,
-              child: BarChart(
-                BarChartData(
-                  barTouchData: BarTouchData(
-                    touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (group) => AppColors.textPrimary,
-                      tooltipRoundedRadius: 8,
-                      tooltipPadding: const EdgeInsets.all(8),
-                      tooltipMargin: 8,
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        return BarTooltipItem(
-                          NumberFormat.compact(locale: 'vi').format(rod.toY),
-                          const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        );
-                      },
-                    ),
-                    touchCallback: (FlTouchEvent event, barTouchResponse) {
-                      setState(() {
-                        if (!event.isInterestedForInteractions ||
-                            barTouchResponse == null ||
-                            barTouchResponse.spot == null) {
-                          _barTouchedIndex = -1;
-                          return;
-                        }
-                        _barTouchedIndex =
-                            barTouchResponse.spot!.touchedBarGroupIndex;
-                      });
-                    },
-                  ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          final index = value.toInt();
-                          String text = '';
-
-                          if (_timeRange == AnalysisTimeRange.week) {
-                            if (index >= 0 && index < 7) {
-                              final date = startDate.add(Duration(days: index));
-                              text = DateFormat('E', 'vi').format(date); // Thứ
-                            }
-                          } else if (_timeRange == AnalysisTimeRange.year) {
-                            text = 'T$index';
-                          } else {
-                            if (index % 5 == 0 || index == 1) text = '$index';
-                          }
-
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              text,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          );
-                        },
-                        reservedSize: 30,
+                // total expense
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        "Tổng chi tiêu",
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  gridData: const FlGridData(show: false),
-                  barGroups: barGroups,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
-            Text(
-              "Danh mục chi tiêu",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            if (categoryDataList.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    "Chưa có dữ liệu",
-                    style: TextStyle(color: AppColors.textSecondary),
+                      const SizedBox(height: 8),
+                      Text(
+                        NumberFormat.currency(
+                          locale: 'vi_VN',
+                          symbol: 'đ',
+                        ).format(totalExpense),
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              )
-            else
-              Column(
-                children: [
-                  // Donut Chart
-                  SizedBox(
-                    height: 200,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        PieChart(
-                          PieChartData(
-                            sectionsSpace: 4,
-                            centerSpaceRadius: 60,
-                            startDegreeOffset: -90,
-                            sections: categoryDataList.asMap().entries.map((
-                              entry,
-                            ) {
-                              final index = entry.key;
-                              final data = entry.value;
-                              final isTouched = index == _touchedIndex;
-                              final radius = isTouched ? 30.0 : 25.0;
 
-                              return PieChartSectionData(
-                                color: data.category.color,
-                                value: data.amount,
-                                title: '',
-                                radius: radius,
-                                badgeWidget: isTouched
-                                    ? _buildBadge(data.category.icon)
-                                    : null,
-                                badgePositionPercentageOffset: 1.3,
+                const SizedBox(height: 32),
+
+                SizedBox(
+                  height: 220,
+                  child: BarChart(
+                    BarChartData(
+                      barTouchData: BarTouchData(
+                        touchTooltipData: BarTouchTooltipData(
+                          getTooltipColor: (group) => AppColors.textPrimary,
+                          tooltipRoundedRadius: 8,
+                          tooltipPadding: const EdgeInsets.all(8),
+                          tooltipMargin: 8,
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            return BarTooltipItem(
+                              NumberFormat.compact(
+                                locale: 'vi',
+                              ).format(rod.toY),
+                              const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            );
+                          },
+                        ),
+                        touchCallback: (FlTouchEvent event, barTouchResponse) {
+                          setState(() {
+                            if (!event.isInterestedForInteractions ||
+                                barTouchResponse == null ||
+                                barTouchResponse.spot == null) {
+                              _barTouchedIndex = -1;
+                              return;
+                            }
+                            _barTouchedIndex =
+                                barTouchResponse.spot!.touchedBarGroupIndex;
+                          });
+                        },
+                      ),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (double value, TitleMeta meta) {
+                              final index = value.toInt();
+                              String text = '';
+
+                              if (_timeRange == AnalysisTimeRange.week) {
+                                if (index >= 0 && index < 7) {
+                                  final date = startDate.add(
+                                    Duration(days: index),
+                                  );
+                                  text = DateFormat(
+                                    'E',
+                                    'vi',
+                                  ).format(date); // Thứ
+                                }
+                              } else if (_timeRange == AnalysisTimeRange.year) {
+                                text = 'T$index';
+                              } else {
+                                if (index % 5 == 0 || index == 1)
+                                  text = '$index';
+                              }
+
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  text,
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               );
-                            }).toList(),
-                            pieTouchData: PieTouchData(
-                              touchCallback:
-                                  (FlTouchEvent event, pieTouchResponse) {
-                                    setState(() {
-                                      if (!event.isInterestedForInteractions ||
-                                          pieTouchResponse == null ||
-                                          pieTouchResponse.touchedSection ==
-                                              null) {
-                                        _touchedIndex = -1;
-                                        return;
-                                      }
-                                      _touchedIndex = pieTouchResponse
-                                          .touchedSection!
-                                          .touchedSectionIndex;
-                                    });
-                                  },
-                            ),
+                            },
+                            reservedSize: 30,
                           ),
                         ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
+                      ),
+                      borderData: FlBorderData(show: false),
+                      gridData: const FlGridData(show: false),
+                      barGroups: barGroups,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                Text(
+                  "Danh mục chi tiêu",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                if (categoryDataList.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        "Chưa có dữ liệu",
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ),
+                  )
+                else
+                  Column(
+                    children: [
+                      // Donut Chart
+                      SizedBox(
+                        height: 200,
+                        child: Stack(
+                          alignment: Alignment.center,
                           children: [
-                            Text(
-                              _touchedIndex != -1 &&
-                                      _touchedIndex < categoryDataList.length
-                                  ? "${categoryDataList[_touchedIndex].percentage.toStringAsFixed(1)}%"
-                                  : "Tổng",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                            PieChart(
+                              PieChartData(
+                                sectionsSpace: 4,
+                                centerSpaceRadius: 60,
+                                startDegreeOffset: -90,
+                                sections: categoryDataList.asMap().entries.map((
+                                  entry,
+                                ) {
+                                  final index = entry.key;
+                                  final data = entry.value;
+                                  final isTouched = index == _touchedIndex;
+                                  final radius = isTouched ? 30.0 : 25.0;
+
+                                  return PieChartSectionData(
+                                    color: data.category.color,
+                                    value: data.amount,
+                                    title: '',
+                                    radius: radius,
+                                    badgeWidget: isTouched
+                                        ? _buildBadge(data.category.icon)
+                                        : null,
+                                    badgePositionPercentageOffset: 1.3,
+                                  );
+                                }).toList(),
+                                pieTouchData: PieTouchData(
+                                  touchCallback:
+                                      (FlTouchEvent event, pieTouchResponse) {
+                                        setState(() {
+                                          if (!event
+                                                  .isInterestedForInteractions ||
+                                              pieTouchResponse == null ||
+                                              pieTouchResponse.touchedSection ==
+                                                  null) {
+                                            _touchedIndex = -1;
+                                            return;
+                                          }
+                                          _touchedIndex = pieTouchResponse
+                                              .touchedSection!
+                                              .touchedSectionIndex;
+                                        });
+                                      },
+                                ),
                               ),
                             ),
-                            Text(
-                              _touchedIndex != -1 &&
-                                      _touchedIndex < categoryDataList.length
-                                  ? categoryDataList[_touchedIndex]
-                                        .category
-                                        .name
-                                  : "Tất cả",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _touchedIndex != -1 &&
+                                          _touchedIndex <
+                                              categoryDataList.length
+                                      ? "${categoryDataList[_touchedIndex].percentage.toStringAsFixed(1)}%"
+                                      : "Tổng",
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  _touchedIndex != -1 &&
+                                          _touchedIndex <
+                                              categoryDataList.length
+                                      ? categoryDataList[_touchedIndex]
+                                            .category
+                                            .name
+                                      : "Tất cả",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // category list
+                      ...categoryDataList
+                          .map((data) => _buildCategoryItem(data))
+                          .toList(),
+                    ],
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // category list
-                  ...categoryDataList
-                      .map((data) => _buildCategoryItem(data))
-                      .toList(),
-                ],
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
