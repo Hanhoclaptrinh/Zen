@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/data/models/category_model.dart';
 import 'package:frontend/data/models/transaction_model.dart';
@@ -31,8 +32,15 @@ class CurrencyInputFormatter extends TextInputFormatter {
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final TransactionModel? transaction; // neu truyen vao data cu -> edit mode
+  final double? initialAmount;
+  final String? initialNote;
 
-  const AddTransactionScreen({super.key, this.transaction});
+  const AddTransactionScreen({
+    super.key,
+    this.transaction,
+    this.initialAmount,
+    this.initialNote,
+  });
 
   @override
   ConsumerState<AddTransactionScreen> createState() =>
@@ -72,6 +80,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             'isPaid': split.isPaid,
           });
         }
+      }
+    } else {
+      if (widget.initialAmount != null && widget.initialAmount! > 0) {
+        _amountController.text = NumberFormat.currency(
+          locale: 'vi_VN',
+          symbol: '',
+        ).format(widget.initialAmount).trim();
+      }
+      if (widget.initialNote != null) {
+        _noteController.text = widget.initialNote!;
       }
     }
 
@@ -369,11 +387,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.close_rounded,
-            color: AppColors.textPrimary,
-            size: 28,
-          ),
+          icon: const Icon(Icons.close_rounded, color: Colors.blue, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
         title: widget.transaction != null
@@ -388,10 +402,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         actions: [
           IconButton(
             onPressed: () => _showAddCategoryDialog(context),
-            icon: const Icon(
-              Icons.add_circle_outline,
-              color: AppColors.textPrimary,
-            ),
+            icon: SvgPicture.asset("assets/addico.svg"),
             tooltip: "Thêm danh mục",
           ),
         ],
@@ -504,14 +515,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
-                Icons.people_outline_rounded,
-                color: AppColors.textSecondary,
-              ),
-              SizedBox(width: 12),
-              Text(
+              SvgPicture.asset("assets/teamico.svg", width: 30, height: 30),
+              const SizedBox(width: 12),
+              const Text(
                 "Chia tiền cho nhiều người",
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
@@ -696,11 +704,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.calendar_today_rounded,
-              size: 18,
-              color: AppColors.textSecondary,
-            ),
+            SvgPicture.asset("assets/cldico.svg"),
             const SizedBox(width: 10),
             Text(
               DateFormat('dd/MM/yyyy').format(_selectedDate),
@@ -722,11 +726,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       ),
       child: TextField(
         controller: _noteController,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
           hintText: "Ghi chú...",
           hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-          icon: Icon(Icons.edit_note_rounded, color: AppColors.textSecondary),
+          icon: SvgPicture.asset("assets/noteico.svg"),
         ),
         style: const TextStyle(fontSize: 13),
       ),

@@ -31,6 +31,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     setState(() => _isLoading = false);
 
     if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Mã xác thực đã được gửi"),
+          backgroundColor: AppColors.success,
+        ),
+      );
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => OtpScreen(email: email)),

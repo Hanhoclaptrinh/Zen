@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/data/models/budget_model.dart';
 import 'package:frontend/data/models/category_model.dart';
 import 'package:frontend/providers/app_providers.dart';
-import 'package:frontend/presentation/widgets/side_menu.dart';
 import 'package:intl/intl.dart';
 
 class BudgetScreen extends ConsumerStatefulWidget {
@@ -221,68 +219,56 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
-      drawerEnableOpenDragGesture: true,
-      drawer: const SideMenu(currentRoute: 'budget'),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: SvgPicture.asset("assets/menuico.svg"),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
         title: const Text(
           "Hạn mức chi tiêu",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
         ),
       ),
       body: SafeArea(
-        child: GestureDetector(
-          onHorizontalDragEnd: (details) {
-            if (details.primaryVelocity! > 0) {
-              _scaffoldKey.currentState?.openDrawer();
-            }
-          },
-          child: budgetState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : budgetState.budgets.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 64,
-                        color: Colors.grey[300],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Chưa có hạn mức nào",
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddBudgetDialog(),
-                        icon: const Icon(Icons.add),
-                        label: const Text("Thiết lập ngay"),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(24),
-                  itemCount: budgetState.budgets.length,
-                  itemBuilder: (context, index) {
-                    final budget = budgetState.budgets[index];
-                    return _buildBudgetCard(budget);
-                  },
+        child: budgetState.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : budgetState.budgets.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 64,
+                      color: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Chưa có hạn mức nào",
+                      style: TextStyle(color: Colors.grey[500]),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddBudgetDialog(),
+                      icon: const Icon(Icons.add),
+                      label: const Text("Thiết lập ngay"),
+                    ),
+                  ],
                 ),
-        ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.all(24),
+                itemCount: budgetState.budgets.length,
+                itemBuilder: (context, index) {
+                  final budget = budgetState.budgets[index];
+                  return _buildBudgetCard(budget);
+                },
+              ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddBudgetDialog(),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: Colors.blueAccent,
+        elevation: 0,
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
       ),
     );
   }
@@ -290,7 +276,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
   Widget _buildBudgetCard(BudgetModel budget) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),  
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -347,7 +333,6 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
               IconButton(
                 icon: const Icon(Icons.more_vert),
                 onPressed: () {
-                  // Actions (Edit/Delete)
                   _showActions(budget);
                 },
               ),

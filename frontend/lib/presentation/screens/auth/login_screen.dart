@@ -4,7 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:frontend/presentation/screens/auth/register_screen.dart';
-import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:frontend/presentation/screens/main_navigation_screen.dart';
 import 'package:frontend/presentation/widgets/auth_input_field.dart';
 import 'package:frontend/presentation/widgets/loading_dialog.dart';
 import 'package:frontend/providers/app_providers.dart';
@@ -50,7 +50,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (success && mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
         (route) => false,
       );
     } else {
@@ -209,9 +209,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _SocialButton(asset: "assets/fbico.svg"),
-                                const SizedBox(width: 20),
-                                _SocialButton(asset: "assets/ggico.svg"),
+                                _SocialButton(
+                                  asset: "assets/fico.svg",
+                                  label: "Facebook",
+                                  onPressed: () {},
+                                ),
+                                const SizedBox(width: 16),
+                                _SocialButton(
+                                  asset: "assets/ggico.svg",
+                                  label: "Google",
+                                  onPressed: () {},
+                                ),
                               ],
                             ),
                             const SizedBox(height: 24),
@@ -285,28 +293,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 class _SocialButton extends StatelessWidget {
   final String asset;
+  final String label;
+  final VoidCallback onPressed;
 
-  const _SocialButton({required this.asset});
+  const _SocialButton({
+    required this.asset,
+    required this.label,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return Expanded(
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: BorderSide(color: Colors.grey.shade300),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(asset, width: 24, height: 24),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: SvgPicture.asset(asset),
     );
   }
 }

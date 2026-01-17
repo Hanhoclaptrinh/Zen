@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart';
 import 'package:frontend/presentation/screens/transactions/transaction_list_screen.dart';
 import 'package:frontend/providers/app_providers.dart';
-import 'package:frontend/presentation/widgets/side_menu.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -35,15 +34,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.background,
-      drawerEnableOpenDragGesture: true,
-      drawer: const SideMenu(currentRoute: 'home'),
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset("assets/menuico.svg"),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -59,298 +52,279 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ],
       ),
       body: SafeArea(
-        child: GestureDetector(
-          onHorizontalDragEnd: (details) {
-            if (details.primaryVelocity! > 0) {
-              _scaffoldKey.currentState?.openDrawer();
-            }
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await ref
+                .read(transactionControllerProvider.notifier)
+                .fetchTransactions();
           },
-          child: RefreshIndicator(
-            onRefresh: () async {
-              await ref
-                  .read(transactionControllerProvider.notifier)
-                  .fetchTransactions();
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.accent.withOpacity(0.1),
-                        child: const Icon(
-                          Icons.person_outline_rounded,
-                          color: AppColors.accent,
-                        ),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: AppColors.accent.withOpacity(0.1),
+                      child: const Icon(
+                        Icons.person_outline_rounded,
+                        color: AppColors.accent,
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Chào buổi sáng,",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          Text(
-                            authState.user?.fullName ?? 'User',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Text(
-                        transactionState.filterMode == FilterMode.day
-                            ? DateFormat(
-                                'dd/MM',
-                              ).format(transactionState.selectedDate)
-                            : DateFormat(
-                                'MM/yyyy',
-                              ).format(transactionState.selectedDate),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 32,
-                      horizontal: 24,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Tổng số dư",
+                          "Chào buổi sáng,",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
                             fontSize: 14,
-                            letterSpacing: 1,
+                            color: AppColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 12),
                         Text(
-                          transactionState.monthlyBalance.toVnd(),
+                          authState.user?.fullName ?? 'User',
                           style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SummaryCard(
-                          title: "Thu",
-                          amount: transactionState.totalIncome,
-                          color: AppColors.success,
-                          icon: SvgPicture.asset(
-                            "assets/adlico.svg",
-                            color: AppColors.success,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const TransactionListScreen(
-                                      transactionType: 'income',
-                                    ),
-                              ),
-                            );
-                          },
-                        ),
+                    const Spacer(),
+                    Text(
+                      transactionState.filterMode == FilterMode.day
+                          ? DateFormat(
+                              'dd/MM',
+                            ).format(transactionState.selectedDate)
+                          : DateFormat(
+                              'MM/yyyy',
+                            ).format(transactionState.selectedDate),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _SummaryCard(
-                          title: "Chi",
-                          amount: transactionState.totalExpense,
-                          color: AppColors.danger,
-                          icon: SvgPicture.asset(
-                            "assets/aurico.svg",
-                            color: AppColors.danger,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const TransactionListScreen(
-                                      transactionType: 'expense',
-                                    ),
-                              ),
-                            );
-                          },
-                        ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 32,
+                    horizontal: 24,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 32),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
                       Text(
-                        transactionState.filterMode == FilterMode.day
-                            ? "Giao dịch hôm nay"
-                            : "Giao dịch tháng này",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        "${transactionState.filteredTransactions.length} giao dịch",
+                        "Tổng số dư",
                         style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 14,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        transactionState.monthlyBalance.toVnd(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 16),
-
-                  // transactions list panel
-                  if (transactionState.isLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.shade100,
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: transactionState.filteredTransactions.isEmpty
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 40),
-                                child: Text("Chưa có giao dịch nào"),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SummaryCard(
+                        title: "Thu",
+                        amount: transactionState.totalIncome,
+                        color: AppColors.success,
+                        icon: SvgPicture.asset(
+                          "assets/adlico.svg",
+                          color: AppColors.success,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TransactionListScreen(
+                                transactionType: 'income',
                               ),
-                            )
-                          : Column(
-                              children: transactionState.filteredTransactions
-                                  .take(5)
-                                  .map((transaction) {
-                                    return Column(
-                                      children: [
-                                        ListTile(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddTransactionScreen(
-                                                      transaction: transaction,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                          contentPadding: EdgeInsets.zero,
-                                          leading: CircleAvatar(
-                                            backgroundColor:
-                                                transaction.type == 'income'
-                                                ? AppColors.success.withOpacity(
-                                                    0.1,
-                                                  )
-                                                : AppColors.danger.withOpacity(
-                                                    0.1,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _SummaryCard(
+                        title: "Chi",
+                        amount: transactionState.totalExpense,
+                        color: AppColors.danger,
+                        icon: SvgPicture.asset(
+                          "assets/aurico.svg",
+                          color: AppColors.danger,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TransactionListScreen(
+                                transactionType: 'expense',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      transactionState.filterMode == FilterMode.day
+                          ? "Giao dịch hôm nay"
+                          : "Giao dịch tháng này",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      "${transactionState.filteredTransactions.length} giao dịch",
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (transactionState.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.shade100,
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: transactionState.filteredTransactions.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: Text("Chưa có giao dịch nào"),
+                            ),
+                          )
+                        : Column(
+                            children: transactionState.filteredTransactions
+                                .take(5)
+                                .map((transaction) {
+                                  return Column(
+                                    children: [
+                                      ListTile(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AddTransactionScreen(
+                                                    transaction: transaction,
                                                   ),
-                                            child: transaction.type == 'income'
-                                                ? SvgPicture.asset(
-                                                    "assets/adlico.svg",
-                                                    color: AppColors.success,
-                                                  )
-                                                : SvgPicture.asset(
-                                                    "assets/aurico.svg",
-                                                    color: AppColors.danger,
-                                                  ),
-                                          ),
-                                          title: Text(
-                                            transaction.note ?? "Giao dịch",
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
                                             ),
-                                          ),
-                                          subtitle: Text(
-                                            DateFormat('dd/MM HH:mm').format(
-                                              transaction.transactionDate,
-                                            ),
-                                          ),
-                                          trailing: Text(
-                                            "${transaction.type == 'income' ? '+' : '-'}${transaction.amount.toVnd()}",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color:
-                                                  transaction.type == 'income'
-                                                  ? AppColors.success
-                                                  : AppColors.danger,
-                                              fontSize: 16,
-                                            ),
+                                          );
+                                        },
+                                        contentPadding: EdgeInsets.zero,
+                                        leading: CircleAvatar(
+                                          backgroundColor:
+                                              transaction.type == 'income'
+                                              ? AppColors.success.withOpacity(
+                                                  0.1,
+                                                )
+                                              : AppColors.danger.withOpacity(
+                                                  0.1,
+                                                ),
+                                          child: transaction.type == 'income'
+                                              ? SvgPicture.asset(
+                                                  "assets/adlico.svg",
+                                                  color: AppColors.success,
+                                                )
+                                              : SvgPicture.asset(
+                                                  "assets/aurico.svg",
+                                                  color: AppColors.danger,
+                                                ),
+                                        ),
+                                        title: Text(
+                                          transaction.note ?? "Giao dịch",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        if (transaction !=
-                                            transactionState
-                                                .filteredTransactions
-                                                .last)
-                                          Divider(
-                                            color: Colors.grey.shade100,
-                                            height: 1,
+                                        subtitle: Text(
+                                          DateFormat(
+                                            'dd/MM HH:mm',
+                                          ).format(transaction.transactionDate),
+                                        ),
+                                        trailing: Text(
+                                          "${transaction.type == 'income' ? '+' : '-'}${transaction.amount.toVnd()}",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: transaction.type == 'income'
+                                                ? AppColors.success
+                                                : AppColors.danger,
+                                            fontSize: 16,
                                           ),
-                                      ],
-                                    );
-                                  })
-                                  .toList(),
-                            ),
-                    ),
-                ],
-              ),
+                                        ),
+                                      ),
+                                      if (transaction !=
+                                          transactionState
+                                              .filteredTransactions
+                                              .last)
+                                        Divider(
+                                          color: Colors.grey.shade100,
+                                          height: 1,
+                                        ),
+                                    ],
+                                  );
+                                })
+                                .toList(),
+                          ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -364,7 +338,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           );
         },
-        backgroundColor: AppColors.primaryDark,
+        elevation: 0,
+        backgroundColor: Colors.blueAccent,
         child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
       ),
     );
@@ -407,7 +382,7 @@ class _AnimatedFilterToggle extends StatelessWidget {
               height: height - (padding * 2),
               margin: const EdgeInsets.symmetric(horizontal: padding),
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: Colors.blueAccent,
                 borderRadius: BorderRadius.circular(16),
               ),
             ),

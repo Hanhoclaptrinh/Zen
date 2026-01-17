@@ -69,7 +69,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: Colors.blue,
+            size: 30,
           ),
           onPressed: () => Navigator.pop(context),
         ),

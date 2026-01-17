@@ -62,10 +62,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         (route) => false,
       );
     } else if (mounted) {
-      final error = ref.read(authControllerProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? "Đặt lại mật khẩu thất bại"),
+        const SnackBar(
+          content: Text("Đặt lại mật khẩu thất bại"),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -82,7 +81,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: Colors.blue,
+            size: 30,
           ),
           onPressed: () => Navigator.pop(context),
         ),
