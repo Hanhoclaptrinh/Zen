@@ -19,6 +19,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
@@ -26,7 +27,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin'), backgroundColor: AppColors.danger),
+        const SnackBar(
+          content: Text('Vui lòng điền đầy đủ thông tin'),
+          backgroundColor: AppColors.danger,
+        ),
       );
       return;
     }
@@ -52,9 +56,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } else {
       final error = ref.read(authControllerProvider).error;
       if (error != null && mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Sai email hoặc mật khẩu"), backgroundColor: AppColors.danger,));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Sai email hoặc mật khẩu"),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
   }
@@ -72,137 +79,178 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: Colors.blue,
+            size: 30,
           ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 10),
-                    const Center(
-                      child: Text(
-                        "Chào mừng trở lại",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF130F40),
-                        ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Center(
-                      child: Text(
-                        "Đăng nhập vào tài khoản của bạn",
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-
-                    AuthInputField(
-                      hintText: "Email hoặc Tên đăng nhập",
-                      keyboardType: TextInputType.emailAddress,
-                      controller: _emailController,
-                    ),
-                    AuthInputField(
-                      hintText: "Mật khẩu",
-                      obscureText: true,
-                      controller: _passwordController,
-                    ),
-
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ForgotPasswordScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          "Quên mật khẩu?",
-                          style: TextStyle(
-                            color: Color(0xFF0057FF),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: Colors.grey.shade300)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            "Hoặc đăng nhập với",
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        Expanded(child: Divider(color: Colors.grey.shade300)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _SocialButton(
-                          asset: "assets/fbico.svg",
-                        ),
-                        const SizedBox(width: 20),
-                        _SocialButton(
-                          asset: "assets/ggico.svg",
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Chưa có tài khoản? ",
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterScreen(),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Spacer(),
+                            const Center(
+                              child: Text(
+                                "Chào mừng trở lại",
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF130F40),
+                                ),
                               ),
-                            );
-                          },
-                          child: const Text(
-                            "Đăng ký ngay",
-                            style: TextStyle(
-                              color: Color(0xFF0057FF),
-                              fontWeight: FontWeight.bold,
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            const Center(
+                              child: Text(
+                                "Đăng nhập vào tài khoản của bạn",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 48),
+
+                            AuthInputField(
+                              hintText: "Email",
+                              keyboardType: TextInputType.emailAddress,
+                              controller: _emailController,
+                              prefixIcon: const Icon(
+                                Icons.email_outlined,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            AuthInputField(
+                              hintText: "Mật khẩu",
+                              obscureText: _obscurePassword,
+                              controller: _passwordController,
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                                color: Colors.grey,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                            ),
+
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ForgotPasswordScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  "Quên mật khẩu?",
+                                  style: TextStyle(
+                                    color: Color(0xFF0057FF),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(color: Colors.grey.shade300),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Text(
+                                    "Hoặc đăng nhập với",
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(color: Colors.grey.shade300),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _SocialButton(asset: "assets/fbico.svg"),
+                                const SizedBox(width: 20),
+                                _SocialButton(asset: "assets/ggico.svg"),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Chưa có tài khoản? ",
+                                  style: TextStyle(color: Colors.grey.shade600),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RegisterScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    "Đăng ký ngay",
+                                    style: TextStyle(
+                                      color: Color(0xFF0057FF),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            const SizedBox(height: 20),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
 
@@ -258,9 +306,7 @@ class _SocialButton extends StatelessWidget {
           ),
         ],
       ),
-      child: SvgPicture.asset(
-        asset,
-      ),
+      child: SvgPicture.asset(asset),
     );
   }
 }

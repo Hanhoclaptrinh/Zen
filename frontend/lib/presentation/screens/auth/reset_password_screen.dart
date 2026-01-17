@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/login_screen.dart';
+import 'package:frontend/presentation/widgets/auth_input_field.dart';
 import 'package:frontend/providers/app_providers.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _confirmPassController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _obscureNewPass = true;
+  bool _obscureConfirmPass = true;
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -84,60 +87,110 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Đặt lại mật khẩu",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Spacer(),
+                              const Center(
+                                child: Text(
+                                  "Đặt lại mật khẩu",
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF130F40),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Center(
+                                child: Text(
+                                  "Nhập mật khẩu mới của bạn.",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+                              AuthInputField(
+                                hintText: "Mật khẩu mới",
+                                obscureText: _obscureNewPass,
+                                controller: _newPassController,
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline_rounded,
+                                  color: Colors.grey,
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureNewPass
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureNewPass = !_obscureNewPass;
+                                    });
+                                  },
+                                ),
+                              ),
+                              AuthInputField(
+                                hintText: "Xác nhận mật khẩu",
+                                obscureText: _obscureConfirmPass,
+                                controller: _confirmPassController,
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline_rounded,
+                                  color: Colors.grey,
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmPass
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmPass =
+                                          !_obscureConfirmPass;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const Spacer(),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-              const Text(
-                "Nhập mật khẩu mới của bạn.",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 40),
-              TextFormField(
-                controller: _newPassController,
-                obscureText: true,
-                validator: (v) =>
-                    v!.length < 6 ? "Mật khẩu phải có ít nhất 6 ký tự" : null,
-                decoration: InputDecoration(
-                  labelText: "Mật khẩu mới",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _confirmPassController,
-                obscureText: true,
-                validator: (v) =>
-                    v!.isEmpty ? "Vui lòng xác nhận mật khẩu" : null,
-                decoration: InputDecoration(
-                  labelText: "Xác nhận mật khẩu",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
+            ),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF0057FF),
+                  minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -154,14 +207,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     : const Text(
                         "Đặt lại mật khẩu",
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

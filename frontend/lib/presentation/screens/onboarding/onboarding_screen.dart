@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -17,19 +19,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "title": "Làm chủ\nchi tiêu",
       "description":
           "Theo dõi mọi khoản thu chi hàng ngày\nmột cách tự động và thông minh.",
-      "icon": Icons.account_balance_wallet_rounded,
+      "icon": "assets/ob1.svg",
     },
     {
       "title": "Tiết kiệm\ntối ưu",
       "description":
           "Thiết lập mục tiêu tài chính và để chúng tôi\ngiúp bạn đạt được chúng nhanh hơn.",
-      "icon": Icons.trending_up_rounded,
+      "icon": "assets/ob2.svg",
     },
     {
       "title": "Bảo mật\ndữ liệu",
       "description":
           "Thông tin tài chính của bạn luôn được\nbảo mật an toàn với công nghệ mã hóa mới nhất.",
-      "icon": Icons.verified_user_rounded,
+      "icon": "assets/ob3.svg",
     },
   ];
 
@@ -65,7 +67,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: ClipPath(
                   clipper: OnboardingHeaderClipper(),
                   child: Container(
-                    color: const Color(0xFF130F40),
+                    color: AppColors.secondary,
                     width: double.infinity,
                   ),
                 ),
@@ -94,14 +96,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         child: Container(
                           width: 200,
                           height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.blueAccent.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
+                          child: SvgPicture.asset(
                             data['icon'],
-                            size: 100,
-                            color: Colors.blueAccent,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/otp_screen.dart';
+import 'package:frontend/presentation/widgets/auth_input_field.dart';
 import 'package:frontend/providers/app_providers.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -35,10 +36,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         MaterialPageRoute(builder: (context) => OtpScreen(email: email)),
       );
     } else if (mounted) {
-      final error = ref.read(authControllerProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? "Gửi mã thất bại"),
+        const SnackBar(
+          content: Text("Không tìm thấy email"),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -55,52 +55,81 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: Colors.blue,
+            size: 30,
           ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Quên mật khẩu",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Spacer(),
+                              const Center(
+                                child: Text(
+                                  "Quên mật khẩu",
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF130F40),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Center(
+                                child: Text(
+                                  "Nhập email của bạn để nhận mã xác thực.",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+                              AuthInputField(
+                                hintText: "Email",
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                prefixIcon: const Icon(
+                                  Icons.email_outlined,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const Spacer(),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-              const Text(
-                "Nhập email của bạn để nhận mã xác thực.",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 40),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) => v!.isEmpty || !v.contains('@')
-                    ? "Email không hợp lệ"
-                    : null,
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: const Icon(Icons.email_outlined),
-                ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
+            ),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF0057FF),
+                  minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -117,14 +146,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     : const Text(
                         "Gửi mã",
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

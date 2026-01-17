@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/login_screen.dart';
 import 'package:frontend/presentation/screens/auth/register_screen.dart';
 
@@ -8,7 +9,7 @@ class AuthChoiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF130F40),
+      backgroundColor: AppColors.primaryDark,
       body: Stack(
         children: [
           SafeArea(
