@@ -104,9 +104,8 @@ class TransactionListScreen extends ConsumerWidget {
         title: Text(
           title,
           style: const TextStyle(
-            color: Colors.black,
+            color: Colors.blueAccent,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
           ),
         ),
       ),

@@ -34,12 +34,14 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
   final TransactionModel? transaction; // neu truyen vao data cu -> edit mode
   final double? initialAmount;
   final String? initialNote;
+  final String? initialImageUrl;
 
   const AddTransactionScreen({
     super.key,
     this.transaction,
     this.initialAmount,
     this.initialNote,
+    this.initialImageUrl,
   });
 
   @override
@@ -57,6 +59,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final TextEditingController _noteController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   CategoryModel? _selectedCategory;
+  String? _imageUrl;
 
   @override
   void initState() {
@@ -90,6 +93,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       }
       if (widget.initialNote != null) {
         _noteController.text = widget.initialNote!;
+      }
+      if (widget.initialImageUrl != null) {
+        _imageUrl = widget.initialImageUrl;
       }
     }
 
@@ -202,6 +208,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       'transactionDate': _selectedDate.toIso8601String(),
       'isSplit': _isSplit,
       'splitDetails': _isSplit ? _splitDetails : null,
+      'imageUrl': _imageUrl,
     };
 
     bool success;
@@ -411,6 +418,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
+            if (_imageUrl != null) _buildImagePreview(),
             _buildAmountInput(),
             const SizedBox(height: 32),
             Container(
@@ -798,16 +806,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   size: 24,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
                 category.name,
-                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 10,
                   color: isSelected
-                      ? AppColors.textPrimary
+                      ? AppColors.primary
                       : AppColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -816,6 +823,56 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildImagePreview() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      width: 120,
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Image.network(
+              _imageUrl!,
+              width: 120,
+              height: 180,
+              fit: BoxFit.cover,
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: () => setState(() => _imageUrl = null),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

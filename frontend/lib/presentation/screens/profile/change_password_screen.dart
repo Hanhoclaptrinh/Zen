@@ -77,9 +77,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         title: const Text(
           "Đổi mật khẩu",
           style: TextStyle(
-            color: Colors.black,
+            color: Colors.blueAccent,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
           ),
         ),
         centerTitle: true,

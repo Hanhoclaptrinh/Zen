@@ -7,6 +7,10 @@ import 'package:frontend/presentation/screens/camera/camera_ocr_screen.dart';
 import 'package:frontend/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:frontend/presentation/screens/profile/profile_screen.dart';
 import 'package:frontend/core/constants/app_colors.dart';
+import 'dart:ui';
+import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart';
+import 'package:frontend/presentation/screens/camera/camera_capture_screen.dart';
+import 'package:frontend/providers/app_providers.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
@@ -29,63 +33,274 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _screens),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        backgroundColor: Colors.white,
-        indicatorColor: AppColors.primary.withOpacity(0.1),
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        elevation: 10,
-        height: 70,
-        destinations: [
-          NavigationDestination(
-            icon: SvgPicture.asset("assets/homeoutlined.svg"),
-            selectedIcon: SvgPicture.asset(
-              "assets/homefilled.svg",
-              color: Colors.blueAccent,
-            ),
-            label: 'Trang chủ',
+    final isMenuOpen = ref.watch(dashboardMenuControllerProvider);
+
+    return Stack(
+      children: [
+        Scaffold(
+          body: IndexedStack(index: _selectedIndex, children: _screens),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+              if (isMenuOpen) {
+                ref.read(dashboardMenuControllerProvider.notifier).close();
+              }
+            },
+            backgroundColor: Colors.white,
+            indicatorColor: AppColors.primary.withOpacity(0.1),
+            labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+            elevation: 10,
+            height: 70,
+            destinations: [
+              NavigationDestination(
+                icon: SvgPicture.asset(
+                  "assets/homeoutlined.svg",
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                selectedIcon: SvgPicture.asset(
+                  "assets/homefilled.svg",
+                  colorFilter: const ColorFilter.mode(
+                    Colors.blueAccent,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'Trang chủ',
+              ),
+              NavigationDestination(
+                icon: SvgPicture.asset(
+                  "assets/chartoutlined.svg",
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                selectedIcon: SvgPicture.asset(
+                  "assets/chartfilled.svg",
+                  colorFilter: const ColorFilter.mode(
+                    Colors.blueAccent,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'Phân tích',
+              ),
+              NavigationDestination(
+                icon: SvgPicture.asset(
+                  "assets/cameraoutlined.svg",
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                selectedIcon: SvgPicture.asset(
+                  "assets/camerafilled.svg",
+                  colorFilter: const ColorFilter.mode(
+                    Colors.blueAccent,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'OCR',
+              ),
+              NavigationDestination(
+                icon: SvgPicture.asset(
+                  "assets/walletoutlined.svg",
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                selectedIcon: SvgPicture.asset(
+                  "assets/walletfilled.svg",
+                  colorFilter: const ColorFilter.mode(
+                    Colors.blueAccent,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'Hạn mức',
+              ),
+              NavigationDestination(
+                icon: SvgPicture.asset(
+                  "assets/useroutlined.svg",
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                selectedIcon: SvgPicture.asset(
+                  "assets/userfilled.svg",
+                  colorFilter: const ColorFilter.mode(
+                    Colors.blueAccent,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'Hồ sơ',
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: SvgPicture.asset("assets/chartoutlined.svg"),
-            selectedIcon: SvgPicture.asset(
-              "assets/chartfilled.svg",
-              color: Colors.blueAccent,
+          floatingActionButton:
+              null,
+        ),
+
+        // blur background
+        if (isMenuOpen && _selectedIndex == 0)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () =>
+                  ref.read(dashboardMenuControllerProvider.notifier).close(),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Container(color: Colors.black.withOpacity(0.3)),
+              ),
             ),
-            label: 'Phân tích',
           ),
-          NavigationDestination(
-            icon: SvgPicture.asset("assets/cameraoutlined.svg"),
-            selectedIcon: SvgPicture.asset(
-              "assets/camerafilled.svg",
-              color: Colors.blueAccent,
+
+        // fab and menu
+        if (_selectedIndex == 0)
+          Positioned(
+            right: 16,
+            bottom: 86 + MediaQuery.of(context).padding.bottom,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (isMenuOpen) ...[
+                  _buildBubbleMenu(context),
+                  const SizedBox(height: 12),
+                ],
+                FloatingActionButton(
+                  onPressed: () {
+                    ref.read(dashboardMenuControllerProvider.notifier).toggle();
+                  },
+                  elevation: 0,
+                  backgroundColor: Colors.blueAccent,
+                  child: Icon(
+                    isMenuOpen ? Icons.close_rounded : Icons.add_rounded,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              ],
             ),
-            label: 'OCR',
           ),
-          NavigationDestination(
-            icon: SvgPicture.asset("assets/walletoutlined.svg"),
-            selectedIcon: SvgPicture.asset(
-              "assets/walletfilled.svg",
-              color: Colors.blueAccent,
+      ],
+    );
+  }
+
+  Widget _buildBubbleMenu(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            width: 200,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-            label: 'Hạn mức',
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildBubbleMenuItem(
+                  icon: SvgPicture.asset("assets/noteico.svg", color: Colors.blueAccent,),
+                  label: "Nhập",
+                  onTap: () {
+                    ref.read(dashboardMenuControllerProvider.notifier).close();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddTransactionScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                _buildBubbleMenuItem(
+                  icon: SvgPicture.asset("assets/camerafilled.svg", color: Colors.blueAccent,),
+                  label: "Chụp ảnh",
+                  onTap: () {
+                    ref.read(dashboardMenuControllerProvider.notifier).close();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CameraCaptureScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: SvgPicture.asset("assets/useroutlined.svg"),
-            selectedIcon: SvgPicture.asset(
-              "assets/userfilled.svg",
-              color: Colors.blueAccent,
+        
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: CustomPaint(
+              size: const Size(20, 12),
+              painter: _BubbleTailPainter(),
             ),
-            label: 'Hồ sơ',
           ),
         ],
       ),
     );
   }
+
+  Widget _buildBubbleMenuItem({
+    required SvgPicture icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            icon,
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BubbleTailPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width / 2, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

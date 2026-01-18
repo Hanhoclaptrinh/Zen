@@ -147,9 +147,23 @@ class AuthState {
   }
 }
 
+class DashboardMenuController extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+  void close() => state = false;
+  void set(bool value) => state = value;
+}
+
+final dashboardMenuControllerProvider =
+    NotifierProvider<DashboardMenuController, bool>(
+      DashboardMenuController.new,
+    );
+
 class AuthController extends Notifier<AuthState> {
-  late AuthService _authService;
-  late ApiClient _apiClient;
+  late final AuthService _authService;
+  late final ApiClient _apiClient;
 
   @override
   AuthState build() {

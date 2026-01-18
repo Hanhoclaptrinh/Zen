@@ -17,7 +17,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   @override
   void initState() {
     super.initState();
@@ -27,12 +26,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final transactionState = ref.watch(transactionControllerProvider);
     final authState = ref.watch(authControllerProvider);
 
     return Scaffold(
       key: _scaffoldKey,
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -69,17 +75,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     CircleAvatar(
                       radius: 24,
                       backgroundColor: AppColors.accent.withOpacity(0.1),
-                      child: const Icon(
-                        Icons.person_outline_rounded,
-                        color: AppColors.accent,
-                      ),
+                      backgroundImage: authState.user?.avatar != null
+                          ? NetworkImage(authState.user!.avatar!)
+                          : null,
+                      child: authState.user?.avatar == null
+                          ? const Icon(
+                              Icons.person_outline_rounded,
+                              color: AppColors.accent,
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Chào buổi sáng,",
+                          "Xin chào,",
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,
@@ -328,19 +339,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddTransactionScreen(),
-            ),
-          );
-        },
-        elevation: 0,
-        backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
       ),
     );
   }
