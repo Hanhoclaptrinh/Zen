@@ -12,6 +12,7 @@ model User {
   email            String    @unique
   passwordHash     String
   fullName         String?
+  avatarUrl        String? // avatar user
   resetCode        String?
   resetCodeExpires DateTime?
   createdAt        DateTime  @default(now())
@@ -41,6 +42,7 @@ model Transaction {
   transactionDate DateTime
   createdAt       DateTime     @default(now())
   isSplit         Boolean      @default(false)
+  imageUrl        String? // image of transaction
 
   userId     Int
   categoryId Int

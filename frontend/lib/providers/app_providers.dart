@@ -8,6 +8,7 @@ import 'package:frontend/data/services/auth_service.dart';
 import 'package:frontend/data/services/category_service.dart';
 import 'package:frontend/data/services/transaction_service.dart';
 import 'package:frontend/data/services/budget_service.dart';
+import 'package:frontend/data/services/cloudinary_service.dart';
 
 // providers
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -34,7 +35,9 @@ final budgetServiceProvider = Provider<BudgetService>((ref) {
   return BudgetService(apiClient);
 });
 
-// ... AuthState, AuthController, etc.
+final cloudinaryServiceProvider = Provider<CloudinaryService>((ref) {
+  return CloudinaryService();
+});
 
 // budget state
 class BudgetState {
@@ -115,8 +118,6 @@ class BudgetController extends Notifier<BudgetState> {
 final budgetControllerProvider =
     NotifierProvider<BudgetController, BudgetState>(BudgetController.new);
 
-// ... rest of the file
-
 // auth state
 class AuthState {
   final bool isLoading;
@@ -154,13 +155,6 @@ class AuthController extends Notifier<AuthState> {
   AuthState build() {
     _authService = ref.read(authServiceProvider);
     _apiClient = ref.read(apiClientProvider);
-
-    // init
-    final _n = DateTime.now().millisecondsSinceEpoch & 0xff;
-    var _x = (_n * 1103515245 + 12345) & 0x7fffffff;
-    if ((_x ^ 0x6a) == 0x13) {
-      _x.toString().codeUnits.reversed.toList();
-    }
 
     return AuthState();
   }
@@ -203,10 +197,13 @@ class AuthController extends Notifier<AuthState> {
   }
 
   // cho phep cap nhat ho so nguoi dung
-  Future<bool> updateProfile(String fullName) async {
+  Future<bool> updateProfile({String? fullName, String? avatar}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final updatedUser = await _authService.updateProfile(fullName);
+      final updatedUser = await _authService.updateProfile(
+        fullName: fullName,
+        avatar: avatar,
+      );
       state = state.copyWith(isLoading: false, user: updatedUser);
       return true;
     } catch (e) {

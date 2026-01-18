@@ -22,7 +22,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
 
   bool _isLoading = false;
-  int _secondsRemaining = 60;
+  int _secondsRemaining = 300;
   Timer? _timer;
 
   @override

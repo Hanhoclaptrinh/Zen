@@ -12,6 +12,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 
 import { MailService } from 'src/mail/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -113,14 +114,19 @@ export class AuthService {
   }
 
   // update profile logic
-  async updateProfile(userId: number, fullName: string) {
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { fullName },
+      // cho phep cap nhat fullname va avatar
+      data: {
+        ... (dto.fullName && { fullName: dto.fullName }),
+        ... (dto.avatarUrl && { avatarUrl: dto.avatarUrl }),
+      },
       select: {
         id: true,
         email: true,
         fullName: true,
+        avatarUrl: true,
         createdAt: true,
       },
     });

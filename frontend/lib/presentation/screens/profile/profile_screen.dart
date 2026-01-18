@@ -4,6 +4,8 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
 import 'package:frontend/presentation/screens/profile/change_password_screen.dart';
 import 'package:frontend/providers/app_providers.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -26,7 +28,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         centerTitle: true,
         title: const Text(
           "Hồ sơ",
-          style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.blueAccent,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SafeArea(
@@ -51,6 +56,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 child: Column(
                   children: [
+                    const SizedBox(height: 20),
                     Stack(
                       children: [
                         Container(
@@ -62,32 +68,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               width: 2,
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: AppColors.primary.withOpacity(0.1),
-                            child: Text(
-                              user?.fullName?[0].toUpperCase() ?? "U",
-                              style: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
+                          child: InkWell(
+                            onTap: _pickAndUploadAvatar,
+                            borderRadius: BorderRadius.circular(50),
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: AppColors.primary.withOpacity(
+                                0.1,
                               ),
+                              backgroundImage: user?.avatar != null
+                                  ? NetworkImage(user!.avatar!)
+                                  : null,
+                              child: user?.avatar == null
+                                  ? Text(
+                                      user?.fullName?[0].toUpperCase() ?? "U",
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
                         ),
+                        if (authState.isLoading)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black26,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
                         Positioned(
                           bottom: 0,
                           right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_rounded,
-                              color: Colors.white,
-                              size: 18,
+                          child: GestureDetector(
+                            onTap: _pickAndUploadAvatar,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                             ),
                           ),
                         ),
@@ -290,7 +325,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 if (newName.isNotEmpty) {
                   final success = await ref
                       .read(authControllerProvider.notifier)
-                      .updateProfile(newName);
+                      .updateProfile(fullName: newName);
                   if (success && mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -312,5 +347,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       },
     );
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (image == null) return;
+
+    try {
+      final cloudinaryService = ref.read(cloudinaryServiceProvider);
+
+      final imageUrl = await cloudinaryService.uploadFile(File(image.path));
+
+      if (imageUrl != null) {
+        final success = await ref
+            .read(authControllerProvider.notifier)
+            .updateProfile(avatar: imageUrl);
+
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Cập nhật ảnh đại diện thành công"),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lỗi: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
   }
 }

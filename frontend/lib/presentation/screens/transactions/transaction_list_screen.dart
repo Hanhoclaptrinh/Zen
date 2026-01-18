@@ -96,8 +96,8 @@ class TransactionListScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            size: 20,
-            color: Colors.black,
+            size: 30,
+            color: Colors.blue,
           ),
           onPressed: () => Navigator.pop(context),
         ),

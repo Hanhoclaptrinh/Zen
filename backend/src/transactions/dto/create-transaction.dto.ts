@@ -38,4 +38,13 @@ export class CreateTransactionDto {
     @ValidateNested({ each: true })
     @Type(() => SplitDetailDto)
     splitDetails?: SplitDetailDto[];
+
+    @ApiProperty({
+        example: 'https://res.cloudinary.com/xxx/image/upload/v123/avatar.jpg',
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    imageUrl?: string;
+
 }

@@ -32,6 +32,10 @@ export class TransactionsService {
       throw new ForbiddenException('Invalid category');
     }
 
+    if (dto.isSplit && (!dto.splitDetails || dto.splitDetails.length === 0)) {
+      throw new ForbiddenException('Split details required');
+    }
+
     return this.prisma.transaction.create({
       data: {
         amount: dto.amount,
@@ -39,6 +43,7 @@ export class TransactionsService {
         note: dto.note,
         transactionDate: new Date(dto.transactionDate),
         isSplit: dto.isSplit || false,
+        imageUrl: dto.imageUrl,
         userId,
         categoryId: dto.categoryId,
         splitDetails: dto.isSplit && dto.splitDetails ? {
@@ -65,6 +70,10 @@ export class TransactionsService {
 
     if (!transaction) {
       throw new ForbiddenException('Transaction not found or access denied');
+    }
+
+    if (dto.isSplit && (!dto.splitDetails || dto.splitDetails.length === 0)) {
+      throw new ForbiddenException('Split details required');
     }
 
     // check category if changed
@@ -94,6 +103,7 @@ export class TransactionsService {
           note: dto.note,
           transactionDate: new Date(dto.transactionDate),
           isSplit: dto.isSplit || false,
+          imageUrl: dto.imageUrl,
           categoryId: dto.categoryId,
           splitDetails: dto.isSplit && dto.splitDetails ? {
             create: dto.splitDetails.map(split => ({

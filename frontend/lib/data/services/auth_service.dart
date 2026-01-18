@@ -46,12 +46,13 @@ class AuthService {
     }
   }
 
-  Future<UserModel> updateProfile(String fullName) async {
+  Future<UserModel> updateProfile({String? fullName, String? avatar}) async {
     try {
-      final response = await _apiClient.dio.post(
-        '/auth/profile',
-        data: {'fullName': fullName},
-      );
+      final data = <String, dynamic>{};
+      if (fullName != null) data['fullName'] = fullName;
+      if (avatar != null) data['avatarUrl'] = avatar;
+
+      final response = await _apiClient.dio.patch('/auth/profile', data: data);
       return UserModel.fromJson(response.data);
     } on DioException catch (e) {
       throw Exception(
@@ -62,7 +63,7 @@ class AuthService {
 
   Future<void> changePassword(String oldPassword, String newPassword) async {
     try {
-      await _apiClient.dio.post(
+      await _apiClient.dio.patch(
         '/auth/change-password',
         data: {'oldPassword': oldPassword, 'newPassword': newPassword},
       );
