@@ -268,7 +268,7 @@ class TransactionListScreen extends ConsumerWidget {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text("Xác nhận xóa"),
-              content: const Text("Bạn có chắc chắn muốn xóa giao dịch này?"),
+              content: const Text("Bạn có chắc chắn muốn xóa chi tiêu này?"),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -399,7 +399,7 @@ class TransactionListScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            "Chưa có giao dịch nào",
+            "Chưa có chi tiêu nào",
             style: TextStyle(
               color: Colors.grey[400],
               fontSize: 16,

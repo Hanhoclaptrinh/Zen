@@ -5,7 +5,8 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:frontend/core/constants/app_colors.dart';
 
 class CameraOCRScreen extends StatefulWidget {
-  const CameraOCRScreen({super.key});
+  final bool isActive;
+  const CameraOCRScreen({super.key, this.isActive = true});
 
   @override
   State<CameraOCRScreen> createState() => _CameraOCRScreenState();
@@ -26,13 +27,28 @@ class _CameraOCRScreenState extends State<CameraOCRScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeCamera();
+    if (widget.isActive) {
+      _initializeCamera();
+    }
+  }
+
+  @override
+  void didUpdateWidget(CameraOCRScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _initializeCamera();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      _isInitialized = false;
+      _controller?.dispose();
+      _controller = null;
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
+    _controller = null;
     _textRecognizer.close();
     super.dispose();
   }
@@ -45,8 +61,10 @@ class _CameraOCRScreenState extends State<CameraOCRScreen>
       return;
     }
 
-    if (state == AppLifecycleState.inactive) {
-      cameraController.dispose();
+    if (state == AppLifecycleState.paused) {
+      _isInitialized = false;
+      _controller?.dispose();
+      _controller = null;
     } else if (state == AppLifecycleState.resumed) {
       _initializeCamera();
     }
@@ -54,23 +72,32 @@ class _CameraOCRScreenState extends State<CameraOCRScreen>
 
   // khởi tạo camera
   Future<void> _initializeCamera() async {
+    if (!widget.isActive) return;
+    if (_controller != null) return; // Already initializing or initialized
+
     try {
-      _cameras = await availableCameras();
+      _cameras = await availableCameras().timeout(const Duration(seconds: 5));
       if (_cameras != null && _cameras!.isNotEmpty) {
-        _controller = CameraController(
+        final controller = CameraController(
           _cameras![0],
           ResolutionPreset.high,
           enableAudio: false,
           imageFormatGroup: ImageFormatGroup.jpeg,
         );
+        _controller = controller;
 
-        await _controller!.initialize();
-        if (mounted) {
-          setState(() {
-            _isInitialized = true;
-            _isFlashOn = false;
-          });
+        await controller.initialize().timeout(const Duration(seconds: 5));
+
+        if (!mounted || !widget.isActive) {
+          await controller.dispose();
+          _controller = null;
+          return;
         }
+
+        setState(() {
+          _isInitialized = true;
+          _isFlashOn = false;
+        });
       } else {
         setState(() {
           _errorMessage = "Không tìm thấy máy ảnh nào trên thiết bị này.";

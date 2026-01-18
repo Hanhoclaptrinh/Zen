@@ -14,7 +14,8 @@ class CameraCaptureScreen extends ConsumerStatefulWidget {
       _CameraCaptureScreenState();
 }
 
-class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
+class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
+    with WidgetsBindingObserver {
   CameraController? _controller;
   bool _isInitializing = true;
   bool _isCapturing = false;
@@ -23,7 +24,21 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeCamera();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    if (state == AppLifecycleState.paused) {
+      _isInitializing = true;
+      _controller?.dispose();
+      _controller = null;
+    } else if (state == AppLifecycleState.resumed) {
+      _initializeCamera();
+    }
   }
 
   // khoi tao camera
@@ -52,7 +67,9 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
+    _controller = null;
     super.dispose();
   }
 

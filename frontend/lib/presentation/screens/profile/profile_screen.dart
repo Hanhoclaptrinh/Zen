@@ -4,6 +4,7 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/presentation/screens/auth/auth_choice_screen.dart';
 import 'package:frontend/presentation/screens/profile/change_password_screen.dart';
 import 'package:frontend/providers/app_providers.dart';
+import 'package:frontend/core/utils/string_utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -146,6 +147,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    _buildBalanceSection(),
                   ],
                 ),
               ),
@@ -384,5 +387,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       }
     }
+  }
+
+  Widget _buildBalanceSection() {
+    final transactionState = ref.watch(transactionControllerProvider);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.blueAccent.withOpacity(0.05),
+            Colors.blueAccent.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.blueAccent.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.account_balance_wallet_rounded,
+                size: 16,
+                color: Colors.blueAccent.withOpacity(0.6),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "TỔNG SỐ DƯ",
+                style: TextStyle(
+                  color: Colors.blueAccent.withOpacity(0.6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            transactionState.monthlyBalance.toVnd(),
+            style: const TextStyle(
+              color: Colors.blueAccent,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

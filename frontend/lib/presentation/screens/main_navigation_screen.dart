@@ -23,22 +23,25 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const ExpenseAnalysisScreen(),
-    const CameraOCRScreen(),
-    const BudgetScreen(),
-    const ProfileScreen(),
-  ];
+  List<Widget> _buildScreens() {
+    return [
+      const DashboardScreen(),
+      const ExpenseAnalysisScreen(),
+      CameraOCRScreen(isActive: _selectedIndex == 2),
+      const BudgetScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final isMenuOpen = ref.watch(dashboardMenuControllerProvider);
+    final screens = _buildScreens();
 
     return Stack(
       children: [
         Scaffold(
-          body: IndexedStack(index: _selectedIndex, children: _screens),
+          body: IndexedStack(index: _selectedIndex, children: screens),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _selectedIndex,
             onDestinationSelected: (index) {
@@ -142,8 +145,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               ),
             ],
           ),
-          floatingActionButton:
-              null,
+          floatingActionButton: null,
         ),
 
         // blur background
@@ -214,7 +216,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildBubbleMenuItem(
-                  icon: SvgPicture.asset("assets/noteico.svg", color: Colors.blueAccent,),
+                  icon: SvgPicture.asset(
+                    "assets/noteico.svg",
+                    color: Colors.blueAccent,
+                  ),
                   label: "Nhập",
                   onTap: () {
                     ref.read(dashboardMenuControllerProvider.notifier).close();
@@ -228,7 +233,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 _buildBubbleMenuItem(
-                  icon: SvgPicture.asset("assets/camerafilled.svg", color: Colors.blueAccent,),
+                  icon: SvgPicture.asset(
+                    "assets/camerafilled.svg",
+                    color: Colors.blueAccent,
+                  ),
                   label: "Chụp ảnh",
                   onTap: () {
                     ref.read(dashboardMenuControllerProvider.notifier).close();
@@ -243,7 +251,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               ],
             ),
           ),
-        
+
           Padding(
             padding: const EdgeInsets.only(right: 18),
             child: CustomPaint(

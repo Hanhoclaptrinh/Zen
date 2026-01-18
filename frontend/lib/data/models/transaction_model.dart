@@ -8,6 +8,8 @@ class TransactionModel {
   final bool isSplit;
   final List<SplitDetailModel>? splitDetails;
 
+  final String? imageUrl;
+
   TransactionModel({
     required this.id,
     required this.amount,
@@ -17,6 +19,7 @@ class TransactionModel {
     required this.categoryId,
     this.isSplit = false,
     this.splitDetails,
+    this.imageUrl,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +38,7 @@ class TransactionModel {
                 .map((i) => SplitDetailModel.fromJson(i))
                 .toList()
           : null,
+      imageUrl: json['imageUrl'] as String?,
     );
   }
 }

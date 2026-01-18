@@ -193,7 +193,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         splitSum += double.parse(split['amount'].toString());
       }
       if (splitSum > totalAmount) {
-        _showError('Tổng tiền chia vượt quá số tiền giao dịch');
+        _showError('Tổng tiền chia vượt quá số tiền chi tiêu');
         return;
       }
     }
@@ -394,14 +394,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: Colors.blue, size: 30),
+          icon: const Icon(Icons.close_rounded, color: Colors.blueAccent, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
         title: widget.transaction != null
             ? const Text(
-                "Sửa giao dịch",
+                "Sửa chi tiêu",
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: Colors.blueAccent,
                   fontWeight: FontWeight.bold,
                 ),
               )
@@ -409,7 +409,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         actions: [
           IconButton(
             onPressed: () => _showAddCategoryDialog(context),
-            icon: SvgPicture.asset("assets/addico.svg"),
+            icon: SvgPicture.asset("assets/addico.svg", color: Colors.blueAccent,),
             tooltip: "Thêm danh mục",
           ),
         ],
@@ -490,15 +490,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           child: ElevatedButton(
             onPressed: _saveTransaction,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: Colors.blueAccent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              elevation: 4,
-              shadowColor: AppColors.primary.withOpacity(0.4),
+              elevation: 2,
+              shadowColor: Colors.blueAccent.withOpacity(0.4),
             ),
             child: Text(
-              widget.transaction != null ? "Lưu thay đổi" : "Lưu giao dịch",
+              widget.transaction != null ? "Lưu thay đổi" : "Lưu chi tiêu",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
