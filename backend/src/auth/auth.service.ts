@@ -50,6 +50,7 @@ export class AuthService {
         id: true,
         email: true,
         fullName: true,
+        avatarUrl: true,
         createdAt: true,
       },
     });
@@ -102,6 +103,7 @@ export class AuthService {
         id: true,
         email: true,
         fullName: true,
+        avatarUrl: true,
         createdAt: true,
       },
     });
