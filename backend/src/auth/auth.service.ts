@@ -13,6 +13,8 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { MailService } from 'src/mail/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { GoogleSignInDto } from './dto/google-sign-in.dto';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +23,42 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
+
+  // google sign in logic
+  async googleSignIn(dto: GoogleSignInDto) {
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(dto.idToken);
+      const { email, name, picture } = decodedToken;
+
+      if (!email) {
+        throw new BadRequestException('Email not found in Google Token');
+      }
+
+      // check if user exists
+      let user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        // create new user if not exists
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            fullName: name || email.split('@')[0],
+            avatarUrl: picture,
+            passwordHash: null as any,
+          },
+        });
+      }
+
+      // generate zen jwt token
+      const accessToken = this.signToken(user.id);
+      return { accessToken };
+    } catch (error) {
+      console.error('Google Sign-In Error:', error);
+      throw new UnauthorizedException('Invalid Google Token');
+    }
+  }
 
   // register logic
   async register(dto: RegisterDto) {
@@ -121,8 +159,8 @@ export class AuthService {
       where: { id: userId },
       // cho phep cap nhat fullname va avatar
       data: {
-        ... (dto.fullName && { fullName: dto.fullName }),
-        ... (dto.avatarUrl && { avatarUrl: dto.avatarUrl }),
+        ...(dto.fullName && { fullName: dto.fullName }),
+        ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }),
       },
       select: {
         id: true,

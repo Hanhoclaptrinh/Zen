@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1076233817613",
+    "project_id": "zentracking-13418",
+    "storage_bucket": "zentracking-13418.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1076233817613:android:68cea064f850494aa78f44",
+        "android_client_info": {
+          "package_name": "com.hanhoclaptrinh.zen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1076233817613-s8smq35re4kaokji94sn42i7r5ots3nd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hanhoclaptrinh.zen",
+            "certificate_hash": "b087305b40a44d92f5b4080ff547cf0a14a07f52"
+          }
+        },
+        {
+          "client_id": "1076233817613-r80oavg7lmrrj1uil5rl123m0hdhnfi9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG1CrgwYTDCpbA0JD-WUqwyK2bAIi2XFw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1076233817613-r80oavg7lmrrj1uil5rl123m0hdhnfi9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1076233817613-92qtn6hse8jl94serq5h8d5m0q5pg79c.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.frontend"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

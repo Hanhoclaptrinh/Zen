@@ -11,7 +11,7 @@ export class TransactionsService {
     return this.prisma.transaction.findMany({
       where: { userId },
       orderBy: { transactionDate: 'desc' },
-      include: { 
+      include: {
         category: true,
         splitDetails: true,
       },
@@ -46,13 +46,16 @@ export class TransactionsService {
         imageUrl: dto.imageUrl,
         userId,
         categoryId: dto.categoryId,
-        splitDetails: dto.isSplit && dto.splitDetails ? {
-          create: dto.splitDetails.map(split => ({
-            name: split.name,
-            amount: split.amount,
-            isPaid: split.isPaid ?? false,
-          })),
-        } : undefined,
+        splitDetails:
+          dto.isSplit && dto.splitDetails
+            ? {
+                create: dto.splitDetails.map((split) => ({
+                  name: split.name,
+                  amount: split.amount,
+                  isPaid: split.isPaid ?? false,
+                })),
+              }
+            : undefined,
       },
       include: {
         splitDetails: true,
@@ -105,13 +108,16 @@ export class TransactionsService {
           isSplit: dto.isSplit || false,
           imageUrl: dto.imageUrl,
           categoryId: dto.categoryId,
-          splitDetails: dto.isSplit && dto.splitDetails ? {
-            create: dto.splitDetails.map(split => ({
-              name: split.name,
-              amount: split.amount,
-              isPaid: split.isPaid ?? false,
-            })),
-          } : undefined,
+          splitDetails:
+            dto.isSplit && dto.splitDetails
+              ? {
+                  create: dto.splitDetails.map((split) => ({
+                    name: split.name,
+                    amount: split.amount,
+                    isPaid: split.isPaid ?? false,
+                  })),
+                }
+              : undefined,
         },
         include: {
           splitDetails: true,

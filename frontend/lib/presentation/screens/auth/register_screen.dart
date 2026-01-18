@@ -67,6 +67,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    showLoadingDialog(context, "Đang đăng ký bằng Google...");
+
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .signInWithGoogle();
+
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+
+    if (success && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+        (route) => false,
+      );
+    } else {
+      final error = ref.read(authControllerProvider).error;
+      if (error != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(authControllerProvider);
@@ -204,7 +231,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 _SocialButton(
                                   asset: "assets/ggico.svg",
                                   label: "Google",
-                                  onPressed: () {},
+                                  onPressed: _handleGoogleSignIn,
                                 ),
                               ],
                             ),

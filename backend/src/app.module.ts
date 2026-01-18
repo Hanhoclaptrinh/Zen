@@ -9,8 +9,15 @@ import { ConfigModule } from '@nestjs/config';
 import { BudgetsModule } from './budgets/budgets.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, CategoriesModule, TransactionsModule, PrismaModule, BudgetsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
+    CategoriesModule,
+    TransactionsModule,
+    PrismaModule,
+    BudgetsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

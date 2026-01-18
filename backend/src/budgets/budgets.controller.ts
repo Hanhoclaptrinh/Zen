@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { BudgetsService } from './budgets.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -23,7 +34,11 @@ export class BudgetsController {
   }
 
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateBudgetDto, @Req() req: AuthRequest) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateBudgetDto,
+    @Req() req: AuthRequest,
+  ) {
     return this.budgetsService.update(id, req.user.id, dto);
   }
 
@@ -33,7 +48,10 @@ export class BudgetsController {
   }
 
   @Get('check/:categoryId')
-  checkStatus(@Param('categoryId', ParseIntPipe) categoryId: number, @Req() req: AuthRequest) {
+  checkStatus(
+    @Param('categoryId', ParseIntPipe) categoryId: number,
+    @Req() req: AuthRequest,
+  ) {
     return this.budgetsService.checkBudgetStatus(req.user.id, categoryId);
   }
 }

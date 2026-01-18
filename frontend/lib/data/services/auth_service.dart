@@ -1,11 +1,56 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:frontend/data/models/user_model.dart';
 import 'package:frontend/data/services/api_client.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final ApiClient _apiClient;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   AuthService(this._apiClient);
+
+  // dang nhap bang google
+  Future<String?> signInWithGoogle() async {
+    try {
+      // lay credential tu google
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // dang nhap vao firebase
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+
+      // lay firebase ID token
+      final String? firebaseIdToken = await userCredential.user?.getIdToken();
+
+      if (firebaseIdToken == null) {
+        throw Exception('Could not get Firebase ID Token');
+      }
+
+      // gui firebaseIdToken ve backend
+      final response = await _apiClient.dio.post(
+        '/auth/google-sign-in',
+        data: {'idToken': firebaseIdToken},
+      );
+      return response.data['accessToken'];
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Google Login to Backend failed',
+      );
+    } catch (e) {
+      throw Exception('Google Sign-In failed: $e');
+    }
+  }
 
   /// xu ly logic
   Future<String> login(String email, String password) async {
