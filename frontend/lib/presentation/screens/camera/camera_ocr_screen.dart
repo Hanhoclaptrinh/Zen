@@ -321,6 +321,19 @@ class _CameraOCRScreenState extends State<CameraOCRScreen>
         fit: StackFit.expand,
         children: [
           Center(child: CameraPreview(_controller!)),
+          if (Navigator.canPop(context))
+            Positioned(
+              top: 40,
+              left: 20,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
           SafeArea(
             child: Column(
               children: [

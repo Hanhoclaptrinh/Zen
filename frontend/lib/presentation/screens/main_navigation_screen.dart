@@ -27,7 +27,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     return [
       const DashboardScreen(),
       const ExpenseAnalysisScreen(),
-      CameraOCRScreen(isActive: _selectedIndex == 2),
+      CameraCaptureScreen(isActive: _selectedIndex == 2),
       const BudgetScreen(),
       const ProfileScreen(),
     ];
@@ -107,7 +107,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     BlendMode.srcIn,
                   ),
                 ),
-                label: 'OCR',
+                label: 'Máy ảnh',
               ),
               NavigationDestination(
                 icon: SvgPicture.asset(
@@ -237,13 +237,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     "assets/camerafilled.svg",
                     color: Colors.blueAccent,
                   ),
-                  label: "Chụp ảnh",
+                  label: "Quét bill",
                   onTap: () {
                     ref.read(dashboardMenuControllerProvider.notifier).close();
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const CameraCaptureScreen(),
+                        builder: (context) => const CameraOCRScreen(),
                       ),
                     );
                   },

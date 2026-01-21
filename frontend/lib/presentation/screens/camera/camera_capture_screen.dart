@@ -7,7 +7,8 @@ import 'package:frontend/providers/app_providers.dart';
 import 'package:frontend/presentation/screens/transaction/add_transaction_screen.dart';
 
 class CameraCaptureScreen extends ConsumerStatefulWidget {
-  const CameraCaptureScreen({super.key});
+  final bool isActive;
+  const CameraCaptureScreen({super.key, this.isActive = true});
 
   @override
   ConsumerState<CameraCaptureScreen> createState() =>
@@ -25,7 +26,21 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeCamera();
+    if (widget.isActive) {
+      _initializeCamera();
+    }
+  }
+
+  @override
+  void didUpdateWidget(CameraCaptureScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _initializeCamera();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      _isInitializing = true;
+      _controller?.dispose();
+      _controller = null;
+    }
   }
 
   @override
@@ -43,6 +58,9 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
 
   // khoi tao camera
   Future<void> _initializeCamera() async {
+    if (!widget.isActive) return;
+    if (_controller != null) return;
+
     final cameras = await availableCameras();
     if (cameras.isEmpty) return;
 
@@ -60,7 +78,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
 
     if (mounted) {
       setState(() {
-        _isInitializing = false;
+        _isInitializing = widget.isActive ? false : true;
       });
     }
   }
@@ -215,18 +233,19 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
           ),
 
           // close button
-          Positioned(
-            top: 40,
-            left: 20,
-            child: IconButton(
-              icon: const Icon(
-                Icons.close_rounded,
-                color: Colors.white,
-                size: 30,
+          if (Navigator.canPop(context))
+            Positioned(
+              top: 40,
+              left: 20,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                onPressed: () => Navigator.pop(context),
               ),
-              onPressed: () => Navigator.pop(context),
             ),
-          ),
         ],
       ),
     );
