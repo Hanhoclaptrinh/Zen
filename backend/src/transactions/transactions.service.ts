@@ -21,11 +21,11 @@ export class TransactionsService {
 
   // create new transaction
   async create(dto: CreateTransactionDto, userId: number) {
-    // check if category belongs to user
+    // check if category belongs to user or is a system category
     const category = await this.prisma.category.findFirst({
       where: {
         id: dto.categoryId,
-        userId,
+        OR: [{ userId }, { userId: null }],
       },
     });
 
@@ -90,7 +90,7 @@ export class TransactionsService {
       const category = await this.prisma.category.findFirst({
         where: {
           id: dto.categoryId,
-          userId,
+          OR: [{ userId }, { userId: null }],
         },
       });
       if (!category) {

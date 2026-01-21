@@ -9,7 +9,12 @@ export class CategoriesService {
 
   findAll(userId: number) {
     return this.prisma.category.findMany({
-      where: { userId },
+      where: {
+        OR: [{ userId }, { userId: { equals: null } }],
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
   }
 
