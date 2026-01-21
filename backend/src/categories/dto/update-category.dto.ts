@@ -1,6 +1,11 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
+export enum CategoryType {
+    INCOME = 'income',
+    EXPENSE = 'expense',
+}
+
 export class UpdateCategoryDto {
   @ApiProperty({ example: 'Ăn uống', required: false })
   @IsOptional()
@@ -8,11 +13,11 @@ export class UpdateCategoryDto {
   name: string;
 
   @ApiProperty({
-    enum: ['income', 'expense'],
-    example: 'expense',
+    enum: CategoryType,
+    example: CategoryType.EXPENSE,
     required: false,
   })
   @IsOptional()
-  @IsEnum(['income', 'expense'])
-  type: 'income' | 'expense';
+  @IsEnum(CategoryType)
+  type: CategoryType;
 }

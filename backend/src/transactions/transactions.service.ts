@@ -2,10 +2,11 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CategoryType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { BudgetsService } from 'src/budgets/budgets.service';
 
 @Injectable()
 export class TransactionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private budgetsService: BudgetsService) {}
 
   async findAll(userId: number) {
     return this.prisma.transaction.findMany({
@@ -36,7 +37,7 @@ export class TransactionsService {
       throw new ForbiddenException('Split details required');
     }
 
-    return this.prisma.transaction.create({
+    const transaction = await this.prisma.transaction.create({
       data: {
         amount: dto.amount,
         type: dto.type,
@@ -61,6 +62,11 @@ export class TransactionsService {
         splitDetails: true,
       },
     });
+
+    // kiem tra budget ngam ngay khi tao moi transaction moi
+    this.budgetsService.checkBudgetExceeded(userId, dto.categoryId);
+
+    return transaction;
   }
 
   async update(id: number, userId: number, dto: CreateTransactionDto) {

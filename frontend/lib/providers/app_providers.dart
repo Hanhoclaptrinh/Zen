@@ -9,6 +9,8 @@ import 'package:frontend/data/services/category_service.dart';
 import 'package:frontend/data/services/transaction_service.dart';
 import 'package:frontend/data/services/budget_service.dart';
 import 'package:frontend/data/services/cloudinary_service.dart';
+import 'package:frontend/data/services/notification_service.dart';
+import 'package:frontend/data/services/push_notification_service.dart';
 
 // providers
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -37,6 +39,18 @@ final budgetServiceProvider = Provider<BudgetService>((ref) {
 
 final cloudinaryServiceProvider = Provider<CloudinaryService>((ref) {
   return CloudinaryService();
+});
+
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return NotificationService(apiClient);
+});
+
+final pushNotificationServiceProvider = Provider<PushNotificationService>((
+  ref,
+) {
+  final backendNotify = ref.watch(notificationServiceProvider);
+  return PushNotificationService(backendNotify);
 });
 
 // budget state
@@ -164,11 +178,13 @@ final dashboardMenuControllerProvider =
 class AuthController extends Notifier<AuthState> {
   late final AuthService _authService;
   late final ApiClient _apiClient;
+  late final PushNotificationService _pushNotificationService;
 
   @override
   AuthState build() {
     _authService = ref.read(authServiceProvider);
     _apiClient = ref.read(apiClientProvider);
+    _pushNotificationService = ref.read(pushNotificationServiceProvider);
 
     return AuthState();
   }
@@ -177,6 +193,8 @@ class AuthController extends Notifier<AuthState> {
     try {
       final user = await _authService.getUserProfile();
       state = state.copyWith(user: user, isAuthenticated: true);
+      // khoi tao push notification ngay sau khi login
+      _pushNotificationService.initialize();
     } catch (e) {
       state = state.copyWith(error: "Failed to load profile");
     }

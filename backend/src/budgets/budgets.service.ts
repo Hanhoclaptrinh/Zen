@@ -1,11 +1,12 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { CategoryType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
+import { NotificationService } from 'src/notification/notification.service';
+import { CategoryType } from '@prisma/client';
 
 @Injectable()
 export class BudgetsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private notificationService: NotificationService) {}
 
   async findAll(userId: number) {
     return this.prisma.budget.findMany({
@@ -89,5 +90,59 @@ export class BudgetsService {
       exceeded: spent > limit,
       remaining: limit - spent,
     };
+  }
+
+  async checkBudgetExceeded(userId: number, categoryId: number) {
+    // tim budget cua user (uu tien category cu the, neu khong co thi lay budget chung)
+    const budgets = await this.prisma.budget.findMany({
+      where: {
+        userId,
+        OR: [{ categoryId }, { categoryId: null }],
+      },
+    });
+
+    if (budgets.length === 0) return;
+
+    // tinh tong chi tieu trong thang hien tai
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    for (const budget of budgets) {
+      const totalExpense = await this.prisma.transaction.aggregate({
+        where: {
+          userId,
+          type: 'expense',
+          transactionDate: { gte: startOfMonth },
+          // neu budget co categoryId thi chi tinh cho category do, 
+          // neu khong (budget chung) thi tinh tat ca chi tieu
+          ...(budget.categoryId ? { categoryId: budget.categoryId } : {}),
+        },
+        _sum: { amount: true },
+      });
+
+      const spent = totalExpense._sum.amount?.toNumber() || 0;
+      const limit = budget.amountLimit.toNumber();
+
+      if (spent > limit) {
+        await this.notificationService.sendToUser(userId, {
+          title: 'What the f*ck bro?',
+          body: `Trong tháng này đã chi ${spent.toLocaleString('vi-VN')}đ á?\nChi cho cl gì thế này đại gia? So cool baby\nVượt quá hạn mức ${limit.toLocaleString('vi-VN')}đ${budget.categoryId ? ' cho danh mục này rồi' : ''}.`,
+          data: {
+            screen: 'budget_detail',
+            budgetId: budget.id.toString(),
+          },
+        });
+      } else if (spent > limit * 0.8) {
+        await this.notificationService.sendToUser(userId, {
+          title: 'Damn Shiettttt',
+          body: `Tháng này chi ${spent.toLocaleString('vi-VN')}đ á? For real baby? (quá 80% hạn mức ${limit.toLocaleString('vi-VN')}đ rồi)!\nCân đối lại chi tiêu đi sĩ vương!`,
+          data: {
+            screen: 'budget_detail',
+            budgetId: budget.id.toString(),
+          },
+        });
+      }
+    }
   }
 }

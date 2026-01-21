@@ -7,6 +7,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { BudgetsModule } from './budgets/budgets.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { BudgetsModule } from './budgets/budgets.module';
     TransactionsModule,
     PrismaModule,
     BudgetsModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
