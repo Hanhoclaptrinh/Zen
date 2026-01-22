@@ -193,8 +193,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  onPressed: () {
-                    ref.read(authControllerProvider.notifier).logout();
+                  onPressed: () async {
+                    await ref.read(authControllerProvider.notifier).logout();
                     if (mounted) {
                       Navigator.pushAndRemoveUntil(
                         context,

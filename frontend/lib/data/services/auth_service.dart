@@ -14,6 +14,9 @@ class AuthService {
   // dang nhap bang google
   Future<String?> signInWithGoogle() async {
     try {
+      // Đảm bảo đăng xuất trước khi đăng nhập để buộc chọn tài khoản
+      await _googleSignIn.signOut();
+
       // lay credential tu google
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
@@ -155,6 +158,15 @@ class AuthService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to reset password',
       );
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+    } catch (e) {
+      print('Error during logout: $e');
     }
   }
 }

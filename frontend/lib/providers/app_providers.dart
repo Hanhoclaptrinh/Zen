@@ -315,8 +315,9 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
     _apiClient.clearToken();
+    await _authService.logout();
     state = AuthState();
   }
 }
