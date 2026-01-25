@@ -14,7 +14,7 @@ class AuthService {
   // dang nhap bang google
   Future<String?> signInWithGoogle() async {
     try {
-      // Đảm bảo đăng xuất trước khi đăng nhập để buộc chọn tài khoản
+      // logout google hien tai moi cho chon login tai khoan khac
       await _googleSignIn.signOut();
 
       // lay credential tu google
