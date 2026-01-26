@@ -134,7 +134,11 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
       );
 
       if (mounted) {
-        Navigator.pushReplacement(
+        setState(() {
+          _isCapturing = false;
+          _capturedFile = null;
+        });
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) =>
@@ -151,9 +155,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
             backgroundColor: AppColors.danger,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
         setState(() {
           _isCapturing = false;
         });
